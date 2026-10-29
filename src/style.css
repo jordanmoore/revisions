@@ -712,12 +712,18 @@ body {
 
 .tile-meta {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  gap: 2px;
   padding: 12px 2px 0;
   font-size: 13px;
   line-height: 18px;
   color: var(--faded);
+}
+
+.tile-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
 
 .tile-title {
@@ -726,16 +732,18 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-shrink: 0;
-  max-width: 55%;
+  min-width: 0;
 }
 
 .tile-sub {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-shrink: 1;
-  min-width: 0;
+}
+
+/* keyboard selection: same ring as hover, so arrows and the mouse read the same */
+.tile.is-selected .mini {
+  border-color: var(--toner);
 }
 
 .tile-delete {

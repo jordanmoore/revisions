@@ -1069,9 +1069,11 @@ function tileHtml(d: Doc): string {
         <div class="mini-stream">${prevLine(older, "is-older")}${prevLine(prev, "")}${latestHtml}</div>
       </div>
       <div class="tile-meta">
-        <span class="tile-title">${escapeHtml(d.title || "Untitled")}</span>
+        <div class="tile-row">
+          <span class="tile-title">${escapeHtml(d.title || "Untitled")}</span>
+          <button type="button" class="tile-delete" data-delete="${d.id}" title="Delete draft (⌫)">Delete</button>
+        </div>
         <span class="tile-sub">${parts.join(" · ")}</span>
-        <button type="button" class="tile-delete" data-delete="${d.id}" title="Delete draft">Delete</button>
       </div>
     </a>`;
 }
@@ -1095,7 +1097,7 @@ function mountDrafts() {
       }
     </main>
     <footer class="footer"><div class="hints">${
-      touch ? "" : `<div class="hint"><kbd>N</kbd><span>New draft</span></div><div class="hint"><kbd>↵</kbd><span>Open latest</span></div>`
+      touch ? "" : `<div class="hint"><kbd>← ↑ ↓ →</kbd><span>Choose</span></div><div class="hint"><kbd>↵</kbd><span>Open</span></div><div class="hint"><kbd>⌫</kbd><span>Delete</span></div><div class="hint"><kbd>N</kbd><span>New draft</span></div>`
     }</div></footer>
   `;
   app.querySelector(".new-draft")!.addEventListener("click", createDraft);
@@ -1103,16 +1105,51 @@ function mountDrafts() {
     b.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const d = getDoc(b.dataset.delete!);
-      if (!d) return;
-      const { latest } = lastThree(d);
-      const label = latest ? `“${latest.text.slice(0, 60)}${latest.text.length > 60 ? "…" : ""}”` : d.title;
-      if (window.confirm(`Delete ${label}? This can't be undone.`)) {
-        removeDoc(d.id);
-        mountDrafts();
-      }
+      deleteDraft(b.dataset.delete!);
     });
   });
+  // hovering moves the keyboard selection too, so the two never disagree
+  app.querySelectorAll<HTMLElement>(".tile").forEach((t, i) => {
+    t.addEventListener("mouseenter", () => selectTile(i));
+  });
+  selectTile(Math.min(draftsFocus, docs.length - 1));
+}
+
+function deleteDraft(id: string) {
+  const d = getDoc(id);
+  if (!d) return;
+  const { latest } = lastThree(d);
+  const label = latest ? `“${latest.text.slice(0, 60)}${latest.text.length > 60 ? "…" : ""}”` : d.title;
+  if (window.confirm(`Delete ${label}? This can't be undone.`)) {
+    removeDoc(d.id);
+    mountDrafts();
+  }
+}
+
+// ---------- keyboard selection of tiles ----------
+
+let draftsFocus = 0;
+
+function tiles(): HTMLElement[] {
+  return Array.from(app.querySelectorAll<HTMLElement>(".tile"));
+}
+
+function selectTile(i: number) {
+  const all = tiles();
+  if (!all.length) return;
+  draftsFocus = Math.max(0, Math.min(i, all.length - 1));
+  all.forEach((t, k) => t.classList.toggle("is-selected", k === draftsFocus));
+  all[draftsFocus].scrollIntoView({ block: "nearest" });
+}
+
+/** Tiles per row, read from the layout so it stays right at any width. */
+function tileColumns(): number {
+  const all = tiles();
+  if (all.length < 2) return 1;
+  const top = all[0].offsetTop;
+  let n = 1;
+  while (n < all.length && all[n].offsetTop === top) n++;
+  return n;
 }
 
 function createDraft() {
@@ -1123,14 +1160,46 @@ function createDraft() {
 
 function draftsKeydown(e: KeyboardEvent) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key === "n" || e.key === "N") {
-    e.preventDefault();
-    createDraft();
-  } else if (e.key === "Enter") {
-    const docs = [...loadStore().docs].sort((a, b) => b.updatedAt - a.updatedAt);
-    if (docs[0]) {
+  const all = tiles();
+  const cols = tileColumns();
+  switch (e.key) {
+    case "n":
+    case "N":
       e.preventDefault();
-      location.hash = `#/d/${docs[0].id}`;
+      createDraft();
+      return;
+    case "ArrowRight":
+      e.preventDefault();
+      selectTile(draftsFocus + 1);
+      return;
+    case "ArrowLeft":
+      e.preventDefault();
+      selectTile(draftsFocus - 1);
+      return;
+    case "ArrowDown":
+      e.preventDefault();
+      if (draftsFocus + cols < all.length) selectTile(draftsFocus + cols);
+      return;
+    case "ArrowUp":
+      e.preventDefault();
+      if (draftsFocus - cols >= 0) selectTile(draftsFocus - cols);
+      return;
+    case "Enter": {
+      const t = all[draftsFocus];
+      if (t) {
+        e.preventDefault();
+        location.hash = `#/d/${t.dataset.id}`;
+      }
+      return;
+    }
+    case "Backspace":
+    case "Delete": {
+      const t = all[draftsFocus];
+      if (t) {
+        e.preventDefault();
+        deleteDraft(t.dataset.id!);
+      }
+      return;
     }
   }
 }

@@ -13,7 +13,7 @@ npm run dev
 
 Then open http://localhost:5173. Everything is saved to `localStorage` in the browser; there is no server.
 
-The app opens on **Drafts**, a dashboard of every draft as a shrunken editor tile: the latest sentence centred, the one before it faded and struck through, a mini rail of dashes down the side. Click a tile to open it, "New draft" (or `N`) to start one, hover a tile for Delete. Inside the editor the "Revisions" crumb goes back, as does `Esc` once there is nothing else to escape from.
+The app opens on **Drafts**, a dashboard of every draft as a shrunken editor tile: the latest sentence centred, the one before it faded and struck through, a mini rail of dashes down the side. Arrow keys move between tiles, Return opens the selected one, Backspace deletes it (after a confirm), `N` starts a new draft; the mouse works too. Inside the editor the "Revisions" crumb goes back, as does `Esc` once there is nothing else to escape from.
 
 ## Keys
 
