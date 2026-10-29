@@ -620,10 +620,6 @@ body {
   border-radius: 2px;
 }
 
-.crumbs .home:hover {
-  color: var(--ink);
-}
-
 .drafts {
   flex: 1;
   overflow-y: auto;
