@@ -553,42 +553,33 @@ function drawMarks(rev: Rev) {
     els.struck = false;
   }
 
-  // bank underline: one stroke under every wrapped line, drawn in line by line like the strike
-  let ulGroup = els.marks.querySelector<SVGGElement>("g.underlines");
-  if (!ulGroup) {
-    ulGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    ulGroup.setAttribute("class", "underlines");
-    els.marks.appendChild(ulGroup);
-  }
-  if (wantUnderline && lines.length && (!els.underlined || geometryChanged)) {
+  let ul = els.marks.querySelector<SVGPathElement>("path.underline");
+  const last = lines[lines.length - 1];
+  if (wantUnderline && last && (!els.underlined || geometryChanged)) {
     const animate = !els.underlined;
-    ulGroup.innerHTML = "";
-    lines.forEach((l, i) => {
-      const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      p.setAttribute("class", "underline");
-      p.setAttribute("d", strokePath(2, l.width + 12, l.top + l.height + 6, rev.id + "u" + i));
-      ulGroup!.appendChild(p);
-      const len = p.getTotalLength();
-      p.style.strokeDasharray = `${len}`;
-      p.style.strokeDashoffset = animate ? `${len}` : "0";
-      if (animate) {
-        p.style.transitionDelay = `${i * 140}ms`;
-        void p.getBoundingClientRect();
-        p.style.strokeDashoffset = "0";
-      }
-    });
+    if (!ul) {
+      ul = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      ul.setAttribute("class", "underline");
+      els.marks.appendChild(ul);
+    }
+    ul.setAttribute("d", strokePath(2, last.width + 12, last.top + last.height + 6, rev.id + "u"));
+    const len = ul.getTotalLength();
+    ul.style.strokeDasharray = `${len}`;
+    ul.style.transitionDelay = "0ms";
+    ul.style.strokeDashoffset = animate ? `${len}` : "0";
+    if (animate) {
+      void ul.getBoundingClientRect();
+      ul.style.strokeDashoffset = "0";
+    }
     els.underlined = true;
-  } else if (!wantUnderline && els.underlined) {
-    const paths = Array.from(ulGroup.querySelectorAll<SVGPathElement>("path"));
-    paths.forEach((p, i) => {
-      const len = p.getTotalLength();
-      p.style.transitionDelay = `${(paths.length - 1 - i) * 100}ms`;
-      p.style.strokeDashoffset = `${len}`;
-    });
-    const group = ulGroup;
+  } else if (!wantUnderline && els.underlined && ul) {
+    const len = ul.getTotalLength();
+    ul.style.transitionDelay = "0ms";
+    ul.style.strokeDashoffset = `${len}`;
+    const node = ul;
     window.setTimeout(() => {
-      if (!els.underlined) group.innerHTML = "";
-    }, 600 + paths.length * 100);
+      if (!els.underlined) node.remove();
+    }, 600);
     els.underlined = false;
   }
 }
