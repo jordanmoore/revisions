@@ -82,7 +82,7 @@ function mountEditor(d: Doc) {
       <div class="crumbs">
         <a class="home" href="#/"><img class="mark" src="${MARK}" alt="" />Revisions</a>
         <span>/</span>
-        <span class="title" contenteditable="plaintext-only" spellcheck="false"></span>
+        <span class="title" contenteditable="plaintext-only" spellcheck="false" data-placeholder="Untitled"></span>
       </div>
       <div class="counter">
         <span class="rev-label"></span>
@@ -106,7 +106,8 @@ function mountEditor(d: Doc) {
   bankedCountEl = $(".banked-count");
   statusEl = $(".status");
 
-  titleEl.textContent = doc.title;
+  // "Untitled" is a placeholder, not text, so a click lands the caret at the start and typing names the draft
+  titleEl.textContent = doc.title === "Untitled" ? "" : doc.title;
   titleEl.addEventListener("input", () => {
     doc.title = titleEl.textContent?.trim() || "Untitled";
     markDirty();

@@ -112,6 +112,17 @@ body {
   background: #fff;
 }
 
+.crumbs .title:empty::before {
+  content: attr(data-placeholder);
+  color: var(--faded-2);
+  pointer-events: none;
+}
+
+.crumbs .title {
+  min-width: 48px;
+  display: inline-block;
+}
+
 .counter {
   gap: 24px;
 }
