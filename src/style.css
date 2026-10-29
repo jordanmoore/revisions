@@ -461,6 +461,22 @@ body {
   display: none;
 }
 
+/* words that differ from the previous revision (CSS Highlight API; three looks to try, ⌘⇧D cycles) */
+html[data-diff="ink"] .sentence::highlight(revised) {
+  color: var(--ballpoint);
+}
+
+html[data-diff="wash"] .sentence::highlight(revised) {
+  background-color: color-mix(in srgb, var(--ballpoint) 10%, transparent);
+}
+
+html[data-diff="underline"] .sentence::highlight(revised) {
+  text-decoration: underline;
+  text-decoration-color: var(--ballpoint);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+}
+
 /* highlighter pen for the word hop */
 .sentence::selection {
   background: var(--highlighter);
