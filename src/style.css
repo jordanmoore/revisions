@@ -82,12 +82,12 @@ body {
 }
 
 .crumbs {
-  gap: 16px;
+  gap: 8px;
 }
 
 .crumbs .project {
   color: var(--toner);
-  font-weight: 600;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -612,7 +612,7 @@ body {
 
 .crumbs .home {
   color: var(--toner);
-  font-weight: 600;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 8px;
