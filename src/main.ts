@@ -965,23 +965,19 @@ function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-/** Latest written sentence and the one before it, skipping an empty live line. */
-function lastTwo(d: Doc): { latest?: Rev; prev?: Rev } {
+/** Latest written sentence and the two before it, skipping an empty live line. */
+function lastThree(d: Doc): { latest?: Rev; prev?: Rev; older?: Rev } {
   const written = d.revs.filter((r) => r.text.trim());
-  return { latest: written[written.length - 1], prev: written[written.length - 2] };
+  const n = written.length;
+  return { latest: written[n - 1], prev: written[n - 2], older: written[n - 3] };
 }
 
 function tileHtml(d: Doc): string {
-  const { latest, prev } = lastTwo(d);
+  const { latest, prev, older } = lastThree(d);
   const banked = d.revs.filter((r) => r.banked).length;
   const count = d.revs.filter((r) => r.text.trim()).length;
-  const ticks = d.revs
-    .slice(-14)
-    .map((r) => `<i class="${r.banked ? "is-banked" : ""}${r === d.revs[d.revs.length - 1] ? " is-latest" : ""}"></i>`)
-    .join("");
-  const prevHtml = prev
-    ? `<div class="mini-prev${prev.banked ? " is-banked" : ""}">${escapeHtml(prev.text)}</div>`
-    : "";
+  const prevLine = (r: Rev | undefined, cls: string) =>
+    r ? `<div class="mini-prev ${cls}${r.banked ? " is-banked" : ""}">${escapeHtml(r.text)}</div>` : "";
   const latestHtml = latest
     ? `<div class="mini-live${latest.banked ? " is-banked" : ""}">${escapeHtml(latest.text)}</div>`
     : `<div class="mini-live is-empty">Write.</div>`;
@@ -991,8 +987,7 @@ function tileHtml(d: Doc): string {
   return `
     <a class="tile" href="#/d/${d.id}" data-id="${d.id}">
       <div class="mini">
-        <div class="mini-rail">${ticks}</div>
-        <div class="mini-stream">${prevHtml}${latestHtml}</div>
+        <div class="mini-stream">${prevLine(older, "is-older")}${prevLine(prev, "")}${latestHtml}</div>
       </div>
       <div class="tile-meta">
         <span class="tile-title">${escapeHtml(d.title || "Untitled")}</span>
@@ -1031,7 +1026,7 @@ function mountDrafts() {
       e.stopPropagation();
       const d = getDoc(b.dataset.delete!);
       if (!d) return;
-      const { latest } = lastTwo(d);
+      const { latest } = lastThree(d);
       const label = latest ? `“${latest.text.slice(0, 60)}${latest.text.length > 60 ? "…" : ""}”` : d.title;
       if (window.confirm(`Delete ${label}? This can't be undone.`)) {
         removeDoc(d.id);
