@@ -95,8 +95,8 @@ body {
 
 /* the squiggle from Figma, Frame 33 */
 .crumbs .mark {
-  width: 16px;
-  height: 18px;
+  width: 12px;
+  height: 14px;
   display: block;
   color: var(--toner);
 }
