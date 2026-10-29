@@ -677,11 +677,14 @@ type Token = { w: string; s: number; e: number };
 const tokenize = (text: string): Token[] =>
   Array.from(text.matchAll(/[\p{L}\p{N}'’-]+/gu)).map((m) => ({ w: m[0].toLowerCase(), s: m.index!, e: m.index! + m[0].length }));
 
-/** Character ranges of words in `cur` that are not part of the longest common word sequence with `prev`. */
-function changedRanges(prev: string, cur: string): [number, number][] {
+/**
+ * Character ranges of words in `cur` that are not part of the longest common word
+ * sequence with `prev`, plus how much of the two sentences that sequence covers.
+ */
+function changedRanges(prev: string, cur: string): { ranges: [number, number][]; similarity: number } {
   const a = tokenize(prev);
   const b = tokenize(cur);
-  if (!a.length || !b.length) return [];
+  if (!a.length || !b.length) return { ranges: [], similarity: 0 };
   const n = a.length;
   const m = b.length;
   const dp: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
@@ -702,10 +705,14 @@ function changedRanges(prev: string, cur: string): [number, number][] {
     else j++;
   }
   const changed = b.filter((_, k) => !kept.has(k));
-  // mostly new words: a rewrite, not an edit, so show nothing
-  if (b.length >= 4 && changed.length / b.length > 0.6) return [];
-  return changed.map((t) => [t.s, t.e]);
+  // shared words over the longer of the two sentences, so a half-typed new line scores low
+  const similarity = kept.size / Math.max(a.length, b.length);
+  return { ranges: changed.map((t) => [t.s, t.e]), similarity };
 }
+
+// Once a line drifts far enough from the previous revision it is a rewrite, not an edit:
+// marks stay off for that revision so words don't flash as the count changes mid-typing.
+let rewriteLatchedFor: string | null = null;
 
 type HighlightCtor = new (...ranges: Range[]) => object;
 const highlightsApi = (CSS as unknown as { highlights?: Map<string, object> }).highlights;
@@ -720,7 +727,13 @@ function markChanges() {
   const els = rows.get(liveRev.id);
   if (!prev || !prev.text.trim() || !els) return;
   const text = els.sentence.textContent ?? "";
-  const ranges = changedRanges(prev.text, text).map(([s, e]) => {
+  if (rewriteLatchedFor === liveRev.id) return;
+  const diff = changedRanges(prev.text, text);
+  if (diff.similarity < 0.5) {
+    rewriteLatchedFor = liveRev.id;
+    return;
+  }
+  const ranges = diff.ranges.map(([s, e]) => {
     const r = document.createRange();
     const [sn, so] = pointAt(els.sentence, s);
     const [en, eo] = pointAt(els.sentence, e);
