@@ -352,7 +352,6 @@ function renderChrome() {
       ["⌘B", focusRev.banked ? "Unbank" : "Bank"],
       ["↑ ↓", "Browse"],
       ["⌘⇧B", "View banked"],
-      ["⌘⇧D", `Changes: ${diffStyle}`],
       ["Esc", "All drafts"],
     ];
   } else if (mode === "browse") {
@@ -674,21 +673,6 @@ function hopWord(el: HTMLElement, dir: 1 | -1, edge = false) {
 // highlight, which colours ranges of text without altering the editable or its caret.
 // A near-total rewrite is left clean: the marks only help when a few words moved.
 
-const DIFF_KEY = "revisions:diff";
-const DIFF_STYLES = ["ink", "wash", "underline", "off"] as const;
-type DiffStyle = (typeof DIFF_STYLES)[number];
-let diffStyle: DiffStyle = (localStorage.getItem(DIFF_KEY) as DiffStyle) || "ink";
-if (!DIFF_STYLES.includes(diffStyle)) diffStyle = "ink";
-document.documentElement.dataset.diff = diffStyle;
-
-function cycleDiffStyle() {
-  diffStyle = DIFF_STYLES[(DIFF_STYLES.indexOf(diffStyle) + 1) % DIFF_STYLES.length];
-  localStorage.setItem(DIFF_KEY, diffStyle);
-  document.documentElement.dataset.diff = diffStyle;
-  renderChrome();
-  markChanges();
-}
-
 type Token = { w: string; s: number; e: number };
 const tokenize = (text: string): Token[] =>
   Array.from(text.matchAll(/[\p{L}\p{N}'’-]+/gu)).map((m) => ({ w: m[0].toLowerCase(), s: m.index!, e: m.index! + m[0].length }));
@@ -730,7 +714,7 @@ const HighlightClass = (window as unknown as { Highlight?: HighlightCtor }).High
 function markChanges() {
   if (!highlightsApi || !HighlightClass) return;
   highlightsApi.delete("revised");
-  if (view !== "editor" || mode !== "edit" || diffStyle === "off") return;
+  if (view !== "editor" || mode !== "edit") return;
   const liveRev = live();
   const prev = doc.revs[doc.revs.length - 2];
   const els = rows.get(liveRev.id);
@@ -921,11 +905,6 @@ function editorKeydown(e: KeyboardEvent) {
     e.preventDefault();
     if (mode === "edit") commit(true);
     else restore();
-    return;
-  }
-  if (meta && e.shiftKey && (e.key === "d" || e.key === "D")) {
-    e.preventDefault();
-    cycleDiffStyle();
     return;
   }
   // ⌘↑ / ⌘↓ : jump to the very first or the very latest revision
