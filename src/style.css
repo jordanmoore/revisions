@@ -795,11 +795,6 @@ body {
   font-weight: 600;
 }
 
-.log-meta:hover .log-title {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 .log-row {
   margin: 0;
   display: flex;
