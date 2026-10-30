@@ -14,6 +14,7 @@ import {
   FolderMinus,
   FolderPlus,
   LayoutGrid,
+  ScrollText,
   Moon,
   Plus,
   SquareText,
@@ -24,7 +25,7 @@ import {
 } from "lucide";
 
 type Mode = "edit" | "browse" | "banked";
-type View = "drafts" | "editor";
+type View = "drafts" | "editor" | "log";
 
 /** Coarse pointer = phone or tablet: show tappable actions instead of key hints. */
 const touch = window.matchMedia("(pointer: coarse)").matches;
@@ -823,7 +824,8 @@ function toggleTheme() {
 function toggleGlobalTheme() {
   globalDark = !globalDark;
   localStorage.setItem(THEME_KEY, globalDark ? "dark" : "light");
-  mountDrafts();
+  if (view === "log") mountLog();
+  else mountDrafts();
 }
 
 function goLatest() {
@@ -1095,6 +1097,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (view === "editor") editorKeydown(e);
+  else if (view === "log") logKeydown(e);
   else draftsKeydown(e);
 });
 
@@ -1106,7 +1109,7 @@ function openCommands() {
   const restore = () => {
     if (view === "editor" && prev && prev !== document.body && app.contains(prev)) prev.focus();
   };
-  const commands = view === "editor" ? editorCommands() : draftsCommands();
+  const commands = view === "editor" ? editorCommands() : view === "log" ? logCommands() : draftsCommands();
   openPalette(commands, { placeholder: view === "editor" ? "Type a command…" : "Type a command or a draft name…", restore });
 }
 
@@ -1158,6 +1161,7 @@ function editorCommands(): Command[] {
     { id: "rename", icon: TextCursorInput, label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
     { id: "newdraft", icon: Plus, label: "New draft", keywords: "create file", run: () => createDraft() },
     { id: "home", icon: LayoutGrid, label: "Go to dashboard", key: "Esc", keywords: "drafts home back", run: () => { save(); location.hash = "#/"; } },
+    { id: "log", icon: ScrollText, label: "Every revision", keywords: "log history all sentences", run: () => { save(); location.hash = "#/log"; } },
     ...groupCommands(doc),
     ...otherDrafts(doc.id),
     { id: "delete", icon: Trash, label: "Delete this draft", danger: true, keywords: "remove", run: () => deleteDraft(doc.id, true) },
@@ -1174,6 +1178,7 @@ function draftsCommands(): Command[] {
     list.push({ id: "open", icon: CornerDownRight, label: `Open ${selected.title || "Untitled"}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; } });
   }
   list.push({ id: "newgroup-top", icon: FolderPlus, label: "New group", key: "G", keywords: "create folder", run: () => createGroup() });
+  list.push({ id: "log", icon: ScrollText, label: "Every revision", keywords: "log history all sentences", run: () => { location.hash = "#/log"; } });
   if (selected) list.push(...groupCommands(selected).map((c) => ({ ...c, label: c.label.replace(/^Move to/, `Move ${selected.title || "Untitled"} to`).replace(/^Remove from/, `Remove ${selected.title || "Untitled"} from`) })));
   list.push(
     ...otherDrafts(selected?.id),
@@ -1284,6 +1289,7 @@ function mountDrafts(focusGroupId?: string) {
       <div class="crumbs"><span class="project"><img class="mark" src="${MARK}" alt="" />Revisions</span></div>
       <div class="counter">
         <span>${docs.length} ${docs.length === 1 ? "draft" : "drafts"}</span>
+        <a class="counter-link" href="#/log" title="Every revision, across every draft">${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</a>
         <button type="button" class="theme-toggle"></button>
         <button type="button" class="act new-group">New group</button>
         <button type="button" class="act -primary new-draft">New draft</button>
@@ -1478,17 +1484,88 @@ function draftsKeydown(e: KeyboardEvent) {
 }
 
 // ======================================================================
+// The log: every revision of every draft, as one flowing record
+// ======================================================================
+
+const revisionCount = () => loadStore().docs.reduce((n, d) => n + d.revs.filter((r) => r.text.trim()).length, 0);
+
+function mountLog() {
+  view = "log";
+  app.dataset.theme = globalDark ? "dark" : "light";
+  const docs = [...loadStore().docs].filter((d) => d.revs.some((r) => r.text.trim())).sort((a, b) => b.updatedAt - a.updatedAt);
+  const rows = docs
+    .map((d) => {
+      const revs = d.revs
+        .filter((r) => r.text.trim())
+        .map((r) => `<a class="log-rev${r.banked ? " is-banked" : ""}" href="#/d/${d.id}/${r.id}" title="${r.note ? escapeHtml(r.note) : "Open at this revision"}">${escapeHtml(r.text.trim())}</a>`)
+        .join("");
+      return `<p class="log-row"><a class="log-title" href="#/d/${d.id}">${escapeHtml(d.title || "Untitled")}</a><img class="mark" src="${MARK}" alt="" />${revs}</p>`;
+    })
+    .join("");
+  const n = loadStore().docs.length;
+  app.innerHTML = `
+    <header class="topbar">
+      <div class="crumbs"><a class="home" href="#/"><img class="mark" src="${MARK}" alt="" />Revisions</a><span>/</span><span class="group-crumb">Every revision</span></div>
+      <div class="counter">
+        <a class="counter-link" href="#/">${n} ${n === 1 ? "draft" : "drafts"}</a>
+        <span>${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</span>
+        <button type="button" class="theme-toggle"></button>
+        <button type="button" class="act -primary new-draft">New draft</button>
+      </div>
+    </header>
+    <main class="log">
+      ${rows || `<div class="drafts-empty"><div class="mini-live is-empty">Write.</div><p>Nothing written yet. Every sentence you commit will show up here.</p></div>`}
+    </main>
+    <footer class="footer"><div class="hints">${
+      touch
+        ? `<button type="button" class="act drafts-commands">Commands</button>`
+        : `<div class="hint"><kbd>Esc</kbd><span>Dashboard</span></div><div class="hint"><kbd>N</kbd><span>New draft</span></div><div class="hint"><kbd>⌘K</kbd><span>Commands</span></div>`
+    }</div></footer>
+  `;
+  app.querySelector(".new-draft")!.addEventListener("click", createDraft);
+  app.querySelector(".theme-toggle")!.addEventListener("click", toggleGlobalTheme);
+  app.querySelector(".drafts-commands")?.addEventListener("click", openCommands);
+  applyTheme();
+}
+
+function logKeydown(e: KeyboardEvent) {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "Escape") {
+    e.preventDefault();
+    location.hash = "#/";
+  } else if (e.key === "n" || e.key === "N") {
+    e.preventDefault();
+    createDraft();
+  }
+}
+
+function logCommands(): Command[] {
+  return [
+    { id: "home", icon: LayoutGrid, label: "Go to dashboard", key: "Esc", keywords: "drafts home back", run: () => { location.hash = "#/"; } },
+    { id: "newdraft", icon: Plus, label: "New draft", key: "N", keywords: "create file", run: () => createDraft() },
+    ...otherDrafts(),
+    { id: "theme", icon: globalDark ? Sun : Moon, label: globalDark ? "Light theme" : "Dark theme", keywords: "theme invert", run: () => toggleGlobalTheme() },
+  ];
+}
+
+// ======================================================================
 // Router
 // ======================================================================
 
 function route() {
   closePalette(false);
   if (view === "editor") save();
-  const m = location.hash.match(/^#\/d\/([a-z0-9]+)/i);
+  if (/^#\/log\b/.test(location.hash)) {
+    mountLog();
+    return;
+  }
+  const m = location.hash.match(/^#\/d\/([a-z0-9]+)(?:\/([a-z0-9]+))?/i);
   if (m) {
     const d = getDoc(m[1]);
     if (d) {
       mountEditor(d);
+      // a revision in the link opens the draft browsing at that line
+      if (m[2] && d.revs.some((r) => r.id === m[2]) && m[2] !== live().id) browseTo(m[2]);
       return;
     }
   }

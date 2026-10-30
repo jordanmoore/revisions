@@ -38,6 +38,8 @@ Words in the live line that differ from the previous revision are written in the
 
 Drafts can be gathered into **groups**. The dashboard shows Recents (drafts in no group) first, then each group newest first with a big faded heading you can rename in place. `G` or New group makes one; the command bar moves a draft into a group, into a new group, or back out, and can delete a group (its drafts return to Recents). The editor crumb shows the draft's group.
 
+**Every revision** (`#/log`, or the revision count on the Drafts page, or "Every revision" in the command bar) lays out every sentence from every draft as one flowing record: the draft's name, then each revision in order, faded except the banked ones. Click a sentence to open that draft browsing at that revision.
+
 `⌘K` opens a command bar in either view, in the same style as the Possible Forms palette: type to filter, arrows to choose, Return to run. In the editor it lists every action (new or blank revision, bank, note, view banked, first or latest, dark mode for the draft, rename, new draft, back to drafts, open another draft, delete). On the Drafts page it offers new draft, open or delete the selected draft, open any draft by name or its opening words, and dark mode for the app.
 
 The Drafts page has a moon / sun control for the whole app (it starts from your system preference and is remembered in the browser). A draft can override it from its own top bar; setting a draft back to match the app clears the override.
