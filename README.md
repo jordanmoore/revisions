@@ -32,7 +32,7 @@ The app opens on **Drafts**, a dashboard of every draft as a shrunken editor til
 | `Esc` | Leave the note | Back to the latest line; in banked-only, back to all revisions |
 | `⇧↵` | Soft line break inside the sentence | |
 
-Bank and note are independent: a line can have either, both, or neither. Banked lines are never struck through.
+Bank and note are independent: a line can have either, both, or neither. Banked lines are never struck through, and in the timeline rail a banked tick shows its sentence (two lines, 150px) instead of its number, so the rail doubles as a list of keepers.
 
 Words in the live line that differ from the previous revision are written in the blue pen. Once a line drifts more than halfway from the previous revision it counts as a rewrite and stays unmarked until you commit.
 

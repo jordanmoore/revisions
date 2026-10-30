@@ -294,7 +294,7 @@ body {
   left: calc(var(--rail-left) + 6px);
   top: 0;
   bottom: 0;
-  width: 120px;
+  width: 190px;
   cursor: default;
   z-index: 3;
 }
@@ -349,9 +349,24 @@ body {
   background: var(--ink);
 }
 
+/* banked: the sentence itself, two lines at most, 150px wide, so the rail doubles as a list of keepers */
+.tick.is-banked {
+  height: auto;
+  min-height: 28px;
+  padding: 7px 0;
+  align-items: center;
+}
+
 .tick.is-banked .num {
   opacity: 1;
   color: var(--ink);
+  width: 150px;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .tick.is-latest .dot {

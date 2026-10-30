@@ -313,7 +313,9 @@ function renderRail() {
     tick.classList.toggle("is-banked", rev.banked);
     tick.classList.toggle("is-focus", rev.id === focusId);
     tick.classList.toggle("is-latest", rev.id === liveRev.id && rev.id !== focusId);
-    tick.innerHTML = `<div class="dot"></div><span class="num">${pad(n)}</span>`;
+    // a banked tick carries its sentence instead of its number, so the rail reads as a list of keepers
+    const label = rev.banked && rev.text.trim() ? escapeHtml(rev.text.trim()) : pad(n);
+    tick.innerHTML = `<div class="dot"></div><span class="num">${label}</span>`;
     tick.title = rev.text || `Rev ${pad(n)}`;
     tick.addEventListener("mousedown", (e) => {
       e.preventDefault();
