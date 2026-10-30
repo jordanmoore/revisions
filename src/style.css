@@ -768,7 +768,7 @@ body {
   padding: 24px 48px 48px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 36px;
 }
 
 /* each draft: its name and count on top, a hairline, then the sentences */
@@ -782,7 +782,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 12px 2px 12px;
+  padding: 12px 2px 18px;
   border-bottom: 1px solid var(--rule);
   text-decoration: none;
   font-size: 13px;
