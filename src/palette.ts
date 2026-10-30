@@ -2,9 +2,13 @@
 // down the page over a scrim, one input, a list of rows with a key chip on the
 // right, and a hints footer. Revisions' own colours, via the CSS variables.
 
+import { createElement, type IconNode } from "lucide";
+
 export type Command = {
   id: string;
   label: string;
+  /** Lucide icon node, drawn in the slot before the label. */
+  icon?: IconNode;
   /** Shortcut shown as a key chip on the right, e.g. "⌘B". */
   key?: string;
   /** Small grey text on the right, e.g. the opening words of a draft. */
@@ -57,6 +61,7 @@ export function openPalette(commands: Command[], opts: Options = {}) {
         (c, i) => `
       <li>
         <button type="button" class="palette-item${i === sel ? " -selected" : ""}${c.danger ? " -danger" : ""}" data-i="${i}">
+          <span class="palette-kind">${c.icon ? createElement(c.icon, { width: 16, height: 16, "stroke-width": 1.75 }).outerHTML : ""}</span>
           <span class="palette-label">${escape(c.label)}</span>
           ${c.note ? `<span class="palette-note">${escape(c.note)}</span>` : ""}
           ${c.key ? `<kbd>${escape(c.key)}</kbd>` : ""}

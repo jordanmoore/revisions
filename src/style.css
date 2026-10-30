@@ -291,7 +291,7 @@ body {
 
 .rail {
   position: absolute;
-  left: var(--rail-left);
+  left: calc(var(--rail-left) + 6px);
   top: 0;
   bottom: 0;
   width: 120px;
@@ -301,7 +301,7 @@ body {
 
 .rail-line {
   position: absolute;
-  left: 6px;
+  left: 0;
   top: 0;
   bottom: 0;
   width: 1px;
@@ -966,6 +966,17 @@ body {
 }
 
 .palette-item.-danger {
+  color: var(--ink);
+}
+
+.palette-kind {
+  flex: 0 0 1.2em;
+  display: flex;
+  align-items: center;
+  color: var(--faded);
+}
+
+.palette-item.-danger .palette-kind {
   color: var(--ink);
 }
 

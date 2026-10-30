@@ -1,6 +1,23 @@
 import "./style.css";
 import { type Doc, type Rev, addDoc, ago, getDoc, loadStore, newDoc, newRev, removeDoc, saveStore } from "./store";
 import { type Command, closePalette, isPaletteOpen, openPalette } from "./palette";
+import {
+  ArrowDown,
+  ArrowUp,
+  Circle,
+  CircleDashed,
+  CircleDot,
+  CirclePile,
+  CornerDownRight,
+  LayoutGrid,
+  Moon,
+  Plus,
+  SquareText,
+  Sun,
+  TextCursorInput,
+  Trash,
+  Undo2,
+} from "lucide";
 
 type Mode = "edit" | "browse" | "banked";
 type View = "drafts" | "editor";
@@ -1094,6 +1111,7 @@ function otherDrafts(exceptId?: string): Command[] {
     .filter((d) => d.id !== exceptId)
     .map((d) => ({
       id: `open:${d.id}`,
+      icon: CornerDownRight,
       label: `Open ${d.title || "Untitled"}`,
       note: draftNote(d),
       run: () => {
@@ -1109,27 +1127,27 @@ function editorCommands(): Command[] {
   const list: Command[] = [];
   if (editing) {
     list.push(
-      { id: "new", label: "New revision", key: "↵", keywords: "next commit", run: () => commit() },
-      { id: "blank", label: "Blank revision", key: "⌘↵", keywords: "empty clear new", run: () => commit(true) },
+      { id: "new", icon: Circle, label: "New revision", key: "↵", keywords: "next commit", run: () => commit() },
+      { id: "blank", icon: CircleDashed, label: "Blank revision", key: "⌘↵", keywords: "empty clear new", run: () => commit(true) },
     );
   } else {
     list.push(
-      { id: "restore", label: mode === "banked" ? "Continue from here" : "Restore as latest", key: "↵", keywords: "copy", run: () => restore() },
-      { id: "latest", label: "Back to latest", key: "Esc", run: () => goLatest() },
+      { id: "restore", icon: Undo2, label: mode === "banked" ? "Continue from here" : "Restore as latest", key: "↵", keywords: "copy", run: () => restore() },
+      { id: "latest", icon: ArrowDown, label: "Back to latest", key: "Esc", run: () => goLatest() },
     );
   }
   list.push(
-    { id: "bank", label: focusRev.banked ? "Unbank this revision" : "Bank this revision", key: editing ? "⌘B" : "B", keywords: "keep save star", run: () => toggleBank() },
-    { id: "note", label: focusRev.note ? "Edit note" : "Add a note", key: "Tab", keywords: "margin comment", run: () => focusNote() },
-    { id: "banked", label: mode === "banked" ? "Show all revisions" : "View banked only", key: "⌘⇧B", keywords: "filter hide show", run: () => toggleBankedOnly() },
-    { id: "first", label: "Go to first revision", key: "⌘↑", run: () => browseTo(visibleRevs()[0].id) },
-    { id: "last", label: "Go to latest revision", key: "⌘↓", run: () => goLatest() },
-    { id: "theme", label: dark ? "Light mode for this draft" : "Dark mode for this draft", key: "⌘⇧D", keywords: "theme invert", run: () => toggleTheme() },
-    { id: "rename", label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
-    { id: "newdraft", label: "New draft", keywords: "create file", run: () => createDraft() },
-    { id: "home", label: "Back to drafts", key: "Esc", keywords: "dashboard home", run: () => { save(); location.hash = "#/"; } },
+    { id: "bank", icon: CircleDot, label: focusRev.banked ? "Unbank this revision" : "Bank this revision", key: editing ? "⌘B" : "B", keywords: "keep save star", run: () => toggleBank() },
+    { id: "note", icon: SquareText, label: focusRev.note ? "Edit note" : "Add a note", key: "Tab", keywords: "margin comment", run: () => focusNote() },
+    { id: "banked", icon: CirclePile, label: mode === "banked" ? "Show all revisions" : "View banked only", key: "⌘⇧B", keywords: "filter hide show", run: () => toggleBankedOnly() },
+    { id: "first", icon: ArrowUp, label: "Go to first revision", key: "⌘↑", run: () => browseTo(visibleRevs()[0].id) },
+    { id: "last", icon: ArrowDown, label: "Go to latest revision", key: "⌘↓", run: () => goLatest() },
+    { id: "theme", icon: dark ? Sun : Moon, label: dark ? "Light mode for this draft" : "Dark mode for this draft", key: "⌘⇧D", keywords: "theme invert", run: () => toggleTheme() },
+    { id: "rename", icon: TextCursorInput, label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
+    { id: "newdraft", icon: Plus, label: "New draft", keywords: "create file", run: () => createDraft() },
+    { id: "home", icon: LayoutGrid, label: "Back to drafts", key: "Esc", keywords: "dashboard home", run: () => { save(); location.hash = "#/"; } },
     ...otherDrafts(doc.id),
-    { id: "delete", label: "Delete this draft", danger: true, keywords: "remove", run: () => deleteDraft(doc.id, true) },
+    { id: "delete", icon: Trash, label: "Delete this draft", danger: true, keywords: "remove", run: () => deleteDraft(doc.id, true) },
   );
   return list;
 }
@@ -1138,16 +1156,16 @@ function draftsCommands(): Command[] {
   const all = tiles();
   const selectedId = all[draftsFocus]?.dataset.id;
   const selected = selectedId ? getDoc(selectedId) : undefined;
-  const list: Command[] = [{ id: "newdraft", label: "New draft", key: "N", keywords: "create file", run: () => createDraft() }];
+  const list: Command[] = [{ id: "newdraft", icon: Plus, label: "New draft", key: "N", keywords: "create file", run: () => createDraft() }];
   if (selected) {
-    list.push({ id: "open", label: `Open ${selected.title || "Untitled"}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; } });
+    list.push({ id: "open", icon: CornerDownRight, label: `Open ${selected.title || "Untitled"}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; } });
   }
   list.push(
     ...otherDrafts(selected?.id),
-    { id: "theme", label: globalDark ? "Light mode for the app" : "Dark mode for the app", keywords: "theme invert", run: () => toggleGlobalTheme() },
+    { id: "theme", icon: globalDark ? Sun : Moon, label: globalDark ? "Light mode for the app" : "Dark mode for the app", keywords: "theme invert", run: () => toggleGlobalTheme() },
   );
   if (selected) {
-    list.push({ id: "delete", label: `Delete ${selected.title || "Untitled"}`, note: draftNote(selected), key: "⌫", danger: true, keywords: "remove", run: () => deleteDraft(selected.id) });
+    list.push({ id: "delete", icon: Trash, label: `Delete ${selected.title || "Untitled"}`, note: draftNote(selected), key: "⌫", danger: true, keywords: "remove", run: () => deleteDraft(selected.id) });
   }
   return list;
 }
