@@ -151,7 +151,7 @@ body {
 
 .crumbs [contenteditable] {
   outline: none;
-  border-radius: 2px;
+  border-radius: 0;
   padding: 0 2px;
   margin: 0 -2px;
 }
@@ -240,7 +240,7 @@ body {
   color: var(--toner);
   background: var(--paper);
   border: 1px solid var(--rule);
-  border-radius: 999px;
+  border-radius: 0;
   height: 36px;
   padding: 0 16px;
   white-space: nowrap;
@@ -701,7 +701,7 @@ body {
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .drafts {
@@ -870,7 +870,7 @@ body {
   position: relative;
   aspect-ratio: 16 / 10;
   border: 1px solid var(--rule);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--paper);
   overflow: hidden;
   transition: border-color 0.2s;
