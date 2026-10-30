@@ -1,5 +1,6 @@
 import "./style.css";
 import { type Doc, type Rev, addDoc, ago, getDoc, loadStore, newDoc, newRev, removeDoc, saveStore } from "./store";
+import { type Command, closePalette, isPaletteOpen, openPalette } from "./palette";
 
 type Mode = "edit" | "browse" | "banked";
 type View = "drafts" | "editor";
@@ -378,10 +379,11 @@ function renderChrome() {
       ["Esc", "All revisions"],
     ];
   }
+  hints.push(["⌘K", "Commands"]);
   hintsEl.innerHTML = hints.map(([k, l]) => `<div class="hint"><kbd>${k}</kbd><span>${l}</span></div>`).join("");
 }
 
-type Action = "bank" | "note" | "done" | "bankedOnly" | "restore" | "latest" | "all" | "theme";
+type Action = "bank" | "note" | "done" | "bankedOnly" | "restore" | "latest" | "all" | "theme" | "commands";
 
 function renderActions(kind: ReturnType<typeof activeKind>) {
   const focusRev = revById(focusId);
@@ -414,6 +416,7 @@ function renderActions(kind: ReturnType<typeof activeKind>) {
       ["note", focusRev.note ? "Edit note" : "Note"],
     ];
   }
+  actions.push(["commands", "More…"]);
   hintsEl.innerHTML = actions
     .filter(([a, , show]) => a !== "bankedOnly" || show)
     .map(([a, l, primary]) => `<button type="button" class="act${primary && a !== "bankedOnly" ? " is-primary" : ""}" data-act="${a}">${l}</button>`)
@@ -446,6 +449,9 @@ function runAction(a: Action) {
       break;
     case "theme":
       toggleTheme();
+      break;
+    case "commands":
+      openCommands();
       break;
   }
 }
@@ -1053,9 +1059,98 @@ function editorKeydown(e: KeyboardEvent) {
 }
 
 document.addEventListener("keydown", (e) => {
+  if (isPaletteOpen()) return; // the bar's own input handles its keys
+  if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (e.key === "k" || e.key === "K")) {
+    e.preventDefault();
+    openCommands();
+    return;
+  }
   if (view === "editor") editorKeydown(e);
   else draftsKeydown(e);
 });
+
+// ---------- command bar ----------
+// Everything the keys can do, by name, so nothing in the app needs a mouse or a memory.
+
+function openCommands() {
+  const prev = document.activeElement as HTMLElement | null;
+  const restore = () => {
+    if (view === "editor" && prev && prev !== document.body && app.contains(prev)) prev.focus();
+  };
+  const commands = view === "editor" ? editorCommands() : draftsCommands();
+  openPalette(commands, { placeholder: view === "editor" ? "Type a command…" : "Type a command or a draft name…", restore });
+}
+
+/** The opening words of a draft, so two "Untitled"s can be told apart. */
+function draftNote(d: Doc): string {
+  const { latest } = lastThree(d);
+  const t = latest?.text.trim() ?? "";
+  return t.length > 48 ? `${t.slice(0, 48)}…` : t;
+}
+
+function otherDrafts(exceptId?: string): Command[] {
+  return [...loadStore().docs]
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .filter((d) => d.id !== exceptId)
+    .map((d) => ({
+      id: `open:${d.id}`,
+      label: `Open ${d.title || "Untitled"}`,
+      note: draftNote(d),
+      run: () => {
+        location.hash = `#/d/${d.id}`;
+      },
+    }));
+}
+
+function editorCommands(): Command[] {
+  const focusRev = revById(focusId);
+  const editing = mode === "edit";
+  const dark = effectiveDark(doc);
+  const list: Command[] = [];
+  if (editing) {
+    list.push(
+      { id: "new", label: "New revision", key: "↵", keywords: "next commit", run: () => commit() },
+      { id: "blank", label: "Blank revision", key: "⌘↵", keywords: "empty clear new", run: () => commit(true) },
+    );
+  } else {
+    list.push(
+      { id: "restore", label: mode === "banked" ? "Continue from here" : "Restore as latest", key: "↵", keywords: "copy", run: () => restore() },
+      { id: "latest", label: "Back to latest", key: "Esc", run: () => goLatest() },
+    );
+  }
+  list.push(
+    { id: "bank", label: focusRev.banked ? "Unbank this revision" : "Bank this revision", key: editing ? "⌘B" : "B", keywords: "keep save star", run: () => toggleBank() },
+    { id: "note", label: focusRev.note ? "Edit note" : "Add a note", key: "Tab", keywords: "margin comment", run: () => focusNote() },
+    { id: "banked", label: mode === "banked" ? "Show all revisions" : "View banked only", key: "⌘⇧B", keywords: "filter hide show", run: () => toggleBankedOnly() },
+    { id: "first", label: "Go to first revision", key: "⌘↑", run: () => browseTo(visibleRevs()[0].id) },
+    { id: "last", label: "Go to latest revision", key: "⌘↓", run: () => goLatest() },
+    { id: "theme", label: dark ? "Light mode for this draft" : "Dark mode for this draft", key: "⌘⇧D", keywords: "theme invert", run: () => toggleTheme() },
+    { id: "rename", label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
+    { id: "newdraft", label: "New draft", keywords: "create file", run: () => createDraft() },
+    { id: "home", label: "Back to drafts", key: "Esc", keywords: "dashboard home", run: () => { save(); location.hash = "#/"; } },
+    ...otherDrafts(doc.id),
+    { id: "delete", label: "Delete this draft", danger: true, keywords: "remove", run: () => deleteDraft(doc.id, true) },
+  );
+  return list;
+}
+
+function draftsCommands(): Command[] {
+  const all = tiles();
+  const selectedId = all[draftsFocus]?.dataset.id;
+  const selected = selectedId ? getDoc(selectedId) : undefined;
+  const list: Command[] = [{ id: "newdraft", label: "New draft", key: "N", keywords: "create file", run: () => createDraft() }];
+  if (selected) {
+    list.push({ id: "open", label: `Open ${selected.title || "Untitled"}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; } });
+  }
+  list.push(
+    ...otherDrafts(selected?.id),
+    { id: "theme", label: globalDark ? "Light mode for the app" : "Dark mode for the app", keywords: "theme invert", run: () => toggleGlobalTheme() },
+  );
+  if (selected) {
+    list.push({ id: "delete", label: `Delete ${selected.title || "Untitled"}`, note: draftNote(selected), key: "⌫", danger: true, keywords: "remove", run: () => deleteDraft(selected.id) });
+  }
+  return list;
+}
 
 document.addEventListener("paste", (e) => {
   if (view !== "editor") return;
@@ -1151,11 +1246,12 @@ function mountDrafts() {
       }
     </main>
     <footer class="footer"><div class="hints">${
-      touch ? "" : `<div class="hint"><kbd>← ↑ ↓ →</kbd><span>Choose</span></div><div class="hint"><kbd>↵</kbd><span>Open</span></div><div class="hint"><kbd>⌫</kbd><span>Delete</span></div><div class="hint"><kbd>N</kbd><span>New draft</span></div>`
+      touch ? `<button type="button" class="act drafts-commands">Commands</button>` : `<div class="hint"><kbd>← ↑ ↓ →</kbd><span>Choose</span></div><div class="hint"><kbd>↵</kbd><span>Open</span></div><div class="hint"><kbd>⌫</kbd><span>Delete</span></div><div class="hint"><kbd>N</kbd><span>New draft</span></div><div class="hint"><kbd>⌘K</kbd><span>Commands</span></div>`
     }</div></footer>
   `;
   app.querySelector(".new-draft")!.addEventListener("click", createDraft);
   app.querySelector(".theme-toggle")!.addEventListener("click", toggleGlobalTheme);
+  app.querySelector(".drafts-commands")?.addEventListener("click", openCommands);
   app.querySelectorAll<HTMLButtonElement>(".tile-delete").forEach((b) => {
     b.addEventListener("click", (e) => {
       e.preventDefault();
@@ -1170,14 +1266,17 @@ function mountDrafts() {
   selectTile(Math.min(draftsFocus, docs.length - 1));
 }
 
-function deleteDraft(id: string) {
+function deleteDraft(id: string, fromEditor = false) {
   const d = getDoc(id);
   if (!d) return;
   const { latest } = lastThree(d);
   const label = latest ? `“${latest.text.slice(0, 60)}${latest.text.length > 60 ? "…" : ""}”` : d.title;
   if (window.confirm(`Delete ${label}? This can't be undone.`)) {
     removeDoc(d.id);
-    mountDrafts();
+    if (fromEditor) {
+      dirty = false; // nothing left to save
+      location.hash = "#/";
+    } else mountDrafts();
   }
 }
 
@@ -1264,6 +1363,7 @@ function draftsKeydown(e: KeyboardEvent) {
 // ======================================================================
 
 function route() {
+  closePalette(false);
   if (view === "editor") save();
   const m = location.hash.match(/^#\/d\/([a-z0-9]+)/i);
   if (m) {

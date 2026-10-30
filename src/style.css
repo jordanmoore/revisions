@@ -873,3 +873,149 @@ body {
     padding: 0 20px;
   }
 }
+
+/* ---- command bar (⌘K), same bones as the Possible Forms palette ---- */
+
+:root {
+  --scrim: rgb(0 0 0 / 0.18);
+  --shadow-modal: rgb(0 0 0 / 0.28);
+  --surface: #ffffff;
+  --surface-hover: #ececec;
+  --surface-line: #eeeeee;
+  --chip: rgb(0 0 0 / 0.06);
+}
+
+#app[data-theme="dark"] ~ .palette-backdrop,
+.palette-backdrop.-dark {
+  --scrim: rgb(0 0 0 / 0.5);
+  --shadow-modal: rgb(0 0 0 / 0.6);
+  --surface: #26262a;
+  --surface-hover: #303035;
+  --surface-line: #35353a;
+  --chip: rgb(255 255 255 / 0.1);
+  --toner: #e8e8ea;
+  --faded: #8c8c93;
+  --ink: #ff4a3d;
+}
+
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--scrim);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 14vh;
+}
+
+.palette {
+  width: 560px;
+  max-width: 90vw;
+  background: var(--surface);
+  color: var(--toner);
+  border-radius: 10px;
+  box-shadow: 0 18px 60px var(--shadow-modal);
+  overflow: hidden;
+  font-family: var(--font-ui);
+}
+
+.palette-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--toner);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  padding: 0.85em 1.1em;
+  outline: none;
+  border-bottom: 1px solid var(--surface-line);
+}
+
+.palette-input::placeholder {
+  color: var(--faded);
+}
+
+.palette-results {
+  list-style: none;
+  margin: 0;
+  padding: 0.4em;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.palette-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  border: none;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: 0.95em;
+  text-align: left;
+  color: var(--toner);
+  padding: 0.55em 0.7em;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.palette-item.-selected {
+  background: var(--surface-hover);
+}
+
+.palette-item.-danger {
+  color: var(--ink);
+}
+
+.palette-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.palette-note {
+  flex: 0 0 auto;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78em;
+  color: var(--faded);
+}
+
+.palette-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1em;
+  padding: 0.55em 1em;
+  border-top: 1px solid var(--surface-line);
+  font-size: 0.75em;
+  color: var(--faded);
+}
+
+.palette-hints kbd {
+  margin-right: 0.25em;
+}
+
+/* keycaps, borrowed from the Possible Forms chip: filled, no border, UI face so ⌘ and ⇥ match the prose */
+.palette kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  min-width: 20px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--chip);
+  color: var(--faded);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  flex: 0 0 auto;
+}

@@ -36,6 +36,8 @@ Bank and note are independent: a line can have either, both, or neither. Banked 
 
 Words in the live line that differ from the previous revision are written in the blue pen. Once a line drifts more than halfway from the previous revision it counts as a rewrite and stays unmarked until you commit.
 
+`⌘K` opens a command bar in either view, in the same style as the Possible Forms palette: type to filter, arrows to choose, Return to run. In the editor it lists every action (new or blank revision, bank, note, view banked, first or latest, dark mode for the draft, rename, new draft, back to drafts, open another draft, delete). On the Drafts page it offers new draft, open or delete the selected draft, open any draft by name or its opening words, and dark mode for the app.
+
 The Drafts page has a Dark / Light control for the whole app (it starts from your system preference and is remembered in the browser). A draft can override it from its own top bar; setting a draft back to match the app clears the override.
 
 On a phone or tablet (any coarse pointer) the key hints become tappable actions: Bank, Note and View banked while typing; Restore, Latest, Bank and Note while browsing. Tap a past line to browse to it, tap the live line or Latest to come back, and the soft keyboard's Return still commits. The app resizes to the visual viewport so the live line stays centred above the keyboard.
