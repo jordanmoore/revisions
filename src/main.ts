@@ -2,6 +2,7 @@ import "./style.css";
 import { type Doc, type Group, type Rev, addDoc, addGroup, ago, getDoc, getGroup, groups, loadStore, newDoc, newRev, removeDoc, removeGroup, saveStore } from "./store";
 import { type Command, closePalette, isPaletteOpen, openPalette } from "./palette";
 import {
+  createElement,
   ArrowDown,
   ArrowUp,
   Circle,
@@ -800,7 +801,12 @@ function applyTheme() {
   const dark = view === "editor" ? effectiveDark(doc) : globalDark;
   app.dataset.theme = dark ? "dark" : "light";
   const b = app.querySelector<HTMLButtonElement>(".theme-toggle");
-  if (b) b.textContent = dark ? "Light" : "Dark";
+  if (b) {
+    // a moon to go dark, a sun to come back
+    b.innerHTML = createElement(dark ? Sun : Moon, { width: 16, height: 16, "stroke-width": 1.75 }).outerHTML;
+    b.setAttribute("aria-label", dark ? "Switch to light" : "Switch to dark");
+    b.title = view === "editor" ? (dark ? "Light theme for this draft (⌘⇧D)" : "Dark theme for this draft (⌘⇧D)") : dark ? "Light theme" : "Dark theme";
+  }
 }
 
 /** Editor: flip this draft; if that lands on the global setting, drop the override. */
@@ -1278,7 +1284,7 @@ function mountDrafts(focusGroupId?: string) {
       <div class="crumbs"><span class="project"><img class="mark" src="${MARK}" alt="" />Revisions</span></div>
       <div class="counter">
         <span>${docs.length} ${docs.length === 1 ? "draft" : "drafts"}</span>
-        <button type="button" class="theme-toggle" title="Dark or light for the whole app">${globalDark ? "Light" : "Dark"}</button>
+        <button type="button" class="theme-toggle"></button>
         <button type="button" class="act new-group">New group</button>
         <button type="button" class="act -primary new-draft">New draft</button>
       </div>
@@ -1297,6 +1303,7 @@ function mountDrafts(focusGroupId?: string) {
   app.querySelector(".new-draft")!.addEventListener("click", createDraft);
   app.querySelector(".new-group")!.addEventListener("click", () => createGroup());
   app.querySelector(".theme-toggle")!.addEventListener("click", toggleGlobalTheme);
+  applyTheme();
   // group headings rename in place: Return or blur saves, Esc puts the old name back
   app.querySelectorAll<HTMLElement>(".section-title[data-group]").forEach((h) => {
     const g = getGroup(h.dataset.group)!;
