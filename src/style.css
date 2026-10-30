@@ -771,6 +771,35 @@ body {
   gap: 18px;
 }
 
+/* each draft: its name and count on top, a hairline, then the sentences */
+.log-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.log-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 2px 12px;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--faded);
+}
+
+.log-title {
+  color: var(--toner);
+  font-weight: 600;
+}
+
+.log-meta:hover .log-title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .log-row {
   margin: 0;
   display: flex;
@@ -787,18 +816,6 @@ body {
   color: var(--toner);
 }
 
-.log-row .mark {
-  width: 12px;
-  height: 14px;
-  margin-top: 6px;
-  flex-shrink: 0;
-}
-
-#app[data-theme="dark"] .log-row .mark {
-  filter: invert(1);
-}
-
-.log-title,
 .log-rev {
   color: inherit;
   text-decoration: none;
@@ -819,11 +836,6 @@ body {
 
 .log-rev.is-banked:hover {
   color: var(--ink);
-}
-
-.log-title:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
 }
 
 @media (max-width: 720px) {

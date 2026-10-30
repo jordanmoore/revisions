@@ -1518,7 +1518,15 @@ function mountLog() {
         .filter((r) => r.text.trim())
         .map((r) => `<a class="log-rev${r.banked ? " is-banked" : ""}" href="#/d/${d.id}/${r.id}" title="${r.note ? escapeHtml(r.note) : "Open at this revision"}">${escapeHtml(r.text.trim())}</a>`)
         .join("");
-      return `<p class="log-row"><a class="log-title" href="#/d/${d.id}">${escapeHtml(d.title || "Untitled")}</a><img class="mark" src="${MARK}" alt="" />${revs}</p>`;
+      const banked = d.revs.filter((r) => r.banked).length;
+      const count = d.revs.filter((r) => r.text.trim()).length;
+      const parts = [`${count} ${count === 1 ? "revision" : "revisions"}`];
+      if (banked) parts.push(`${banked} banked`);
+      parts.push(ago(d.updatedAt));
+      return `<section class="log-entry">
+        <a class="log-meta" href="#/d/${d.id}"><span class="log-title">${escapeHtml(d.title || "Untitled")}</span><span class="log-sub">${parts.join(" · ")}</span></a>
+        <p class="log-row">${revs}</p>
+      </section>`;
     })
     .join("");
   const n = loadStore().docs.length;
