@@ -27,13 +27,14 @@ The app opens on **Drafts**, a dashboard of every draft as a shrunken editor til
 | `⌘B` | Bank / unbank the live line | Bank / unbank (bare `B` also works) |
 | `⌘⇧B` | View banked | View banked |
 | `⌘⇧D` | Dark or light, for this draft only; its tile on the Drafts page follows | |
-Words in the live line that differ from the previous revision are written in the blue pen. Once a line drifts more than halfway from the previous revision it counts as a rewrite and stays unmarked until you commit.
 | `↑` `↓` | Browse history (from the first / last visual line of the sentence) | Move between revisions |
 | `⌘↑` `⌘↓` | Jump to the very first revision / back to the latest | Same |
 | `Esc` | Leave the note | Back to the latest line; in banked-only, back to all revisions |
 | `⇧↵` | Soft line break inside the sentence | |
 
 Bank and note are independent: a line can have either, both, or neither. Banked lines are never struck through.
+
+Words in the live line that differ from the previous revision are written in the blue pen. Once a line drifts more than halfway from the previous revision it counts as a rewrite and stays unmarked until you commit.
 
 On a phone or tablet (any coarse pointer) the key hints become tappable actions: Bank, Note and View banked while typing; Restore, Latest, Bank and Note while browsing. Tap a past line to browse to it, tap the live line or Latest to come back, and the soft keyboard's Return still commits. The app resizes to the visual viewport so the live line stays centred above the keyboard.
 
