@@ -852,6 +852,18 @@ body {
   border-color: var(--toner);
 }
 
+/* the shortcut, greyed, sitting inside the button like the footer hints */
+.act kbd {
+  font: inherit;
+  font-weight: 500;
+  color: var(--faded);
+  margin-left: 8px;
+}
+
+.act.-primary kbd {
+  color: color-mix(in srgb, var(--paper) 55%, transparent);
+}
+
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

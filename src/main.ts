@@ -1299,8 +1299,8 @@ function mountDrafts(focusGroupId?: string) {
         <span>${docs.length} ${docs.length === 1 ? "draft" : "drafts"}</span>
         <a class="counter-link" href="#/log" title="Every revision, across every draft">${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</a>
         <button type="button" class="theme-toggle"></button>
-        <button type="button" class="act new-group">New group</button>
-        <button type="button" class="act -primary new-draft">New draft</button>
+        <button type="button" class="act new-group">New group${touch ? "" : "<kbd>G</kbd>"}</button>
+        <button type="button" class="act -primary new-draft">New draft${touch ? "" : "<kbd>N</kbd>"}</button>
       </div>
     </header>
     <main class="drafts">
@@ -1529,7 +1529,7 @@ function mountLog() {
         <a class="counter-link" href="#/">${n} ${n === 1 ? "draft" : "drafts"}</a>
         <span>${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</span>
         <button type="button" class="theme-toggle"></button>
-        <button type="button" class="act -primary new-draft">New draft</button>
+        <button type="button" class="act -primary new-draft">New draft${touch ? "" : "<kbd>N</kbd>"}</button>
       </div>
     </header>
     <main class="log">
