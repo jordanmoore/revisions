@@ -40,6 +40,17 @@
   --paper-0: rgb(20 20 20 / 0);
 }
 
+/* a light draft's tile on a dark dashboard */
+.tile.is-light .mini {
+  --paper: #ffffff;
+  --toner: #141414;
+  --faded: #8a8a86;
+  --faded-2: #c9c9c5;
+  --rule: #dcdcd8;
+  --ink: #d9281e;
+  --ballpoint: #1d3fd6;
+}
+
 #app[data-theme="dark"] {
   background: var(--paper);
   color: var(--toner);
@@ -695,19 +706,14 @@ body {
   padding: 0 28px;
 }
 
+/* the selection ring takes the page's ink, resolved on the tile before the mini swaps its palette */
+.tile {
+  --ring: var(--toner);
+}
+
 .tile:hover .mini,
 .tile.is-selected .mini {
-  border-color: #141414;
-}
-
-.tile.is-dark .mini {
-  border-color: #141414;
-}
-
-.tile.is-dark:hover .mini,
-.tile.is-dark.is-selected .mini {
-  border-color: #141414;
-  outline: 2px solid #141414;
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 

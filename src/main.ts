@@ -752,21 +752,43 @@ function markChanges() {
   if (ranges.length) highlightsApi.set("revised", new HighlightClass(...ranges));
 }
 
-// ---------- dark mode, per draft ----------
-// A draft remembers whether it is written white on black. Only the editor inverts;
-// the dashboard stays light and shows the draft's tile the way the draft looks.
+// ---------- dark mode ----------
+// Two layers: a global setting (defaults to the system preference) and a per-draft
+// override on top. A draft with no override follows the global; toggling inside a
+// draft sets its own, and setting it back to match the global clears the override.
+
+const THEME_KEY = "revisions:theme";
+let globalDark = (() => {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === "dark") return true;
+  if (saved === "light") return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+})();
+
+const effectiveDark = (d: Doc) => d.dark ?? globalDark;
 
 function applyTheme() {
-  app.dataset.theme = view === "editor" && doc.dark ? "dark" : "light";
+  const dark = view === "editor" ? effectiveDark(doc) : globalDark;
+  app.dataset.theme = dark ? "dark" : "light";
   const b = app.querySelector<HTMLButtonElement>(".theme-toggle");
-  if (b) b.textContent = doc.dark ? "Light" : "Dark";
+  if (b) b.textContent = dark ? "Light" : "Dark";
 }
 
+/** Editor: flip this draft; if that lands on the global setting, drop the override. */
 function toggleTheme() {
-  doc.dark = !doc.dark;
+  const next = !effectiveDark(doc);
+  if (next === globalDark) delete doc.dark;
+  else doc.dark = next;
   markDirty();
   applyTheme();
   renderChrome();
+}
+
+/** Dashboard: flip the whole app. Drafts with their own setting keep it. */
+function toggleGlobalTheme() {
+  globalDark = !globalDark;
+  localStorage.setItem(THEME_KEY, globalDark ? "dark" : "light");
+  mountDrafts();
 }
 
 function goLatest() {
@@ -1094,7 +1116,7 @@ function tileHtml(d: Doc): string {
   if (banked) parts.push(`${banked} banked`);
   parts.push(ago(d.updatedAt));
   return `
-    <a class="tile${d.dark ? " is-dark" : ""}" href="#/d/${d.id}" data-id="${d.id}">
+    <a class="tile ${effectiveDark(d) ? "is-dark" : "is-light"}" href="#/d/${d.id}" data-id="${d.id}">
       <div class="mini">
         <div class="mini-stream">${prevLine(older, "is-older")}${prevLine(prev, "")}${latestHtml}</div>
       </div>
@@ -1110,13 +1132,14 @@ function tileHtml(d: Doc): string {
 
 function mountDrafts() {
   view = "drafts";
-  app.dataset.theme = "light";
+  app.dataset.theme = globalDark ? "dark" : "light";
   const docs = [...loadStore().docs].sort((a, b) => b.updatedAt - a.updatedAt);
   app.innerHTML = `
     <header class="topbar">
       <div class="crumbs"><span class="project"><img class="mark" src="${MARK}" alt="" />Revisions</span></div>
       <div class="counter">
         <span>${docs.length} ${docs.length === 1 ? "draft" : "drafts"}</span>
+        <button type="button" class="theme-toggle" title="Dark or light for the whole app">${globalDark ? "Light" : "Dark"}</button>
         <button type="button" class="act new-draft">New draft</button>
       </div>
     </header>
@@ -1132,6 +1155,7 @@ function mountDrafts() {
     }</div></footer>
   `;
   app.querySelector(".new-draft")!.addEventListener("click", createDraft);
+  app.querySelector(".theme-toggle")!.addEventListener("click", toggleGlobalTheme);
   app.querySelectorAll<HTMLButtonElement>(".tile-delete").forEach((b) => {
     b.addEventListener("click", (e) => {
       e.preventDefault();
