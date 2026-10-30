@@ -1386,12 +1386,23 @@ function selectTile(i: number) {
   all[draftsFocus].scrollIntoView({ block: "nearest" });
 }
 
-/** Tiles per row, read from the layout so it stays right at any width. */
-function tileColumns(): number {
-  const grid = app.querySelector<HTMLElement>(".tiles");
-  if (!grid) return 1;
-  const cols = getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length;
-  return Math.max(1, cols);
+/**
+ * Up/down by geometry rather than by column count: the nearest row of tiles in that
+ * direction, then the tile closest horizontally, so the selection crosses between
+ * Recents and the groups below however many tiles each one holds.
+ */
+function moveVertical(dir: 1 | -1) {
+  const all = tiles();
+  const cur = all[draftsFocus];
+  if (!cur) return;
+  const here = cur.getBoundingClientRect();
+  const others = all.map((t, i) => ({ i, r: t.getBoundingClientRect() })).filter((c) => (dir > 0 ? c.r.top > here.top + 1 : c.r.top < here.top - 1));
+  if (!others.length) return;
+  const rowTop = dir > 0 ? Math.min(...others.map((c) => c.r.top)) : Math.max(...others.map((c) => c.r.top));
+  const row = others.filter((c) => Math.abs(c.r.top - rowTop) < 1);
+  const cx = here.left + here.width / 2;
+  const best = row.reduce((a, b) => (Math.abs(b.r.left + b.r.width / 2 - cx) < Math.abs(a.r.left + a.r.width / 2 - cx) ? b : a));
+  selectTile(best.i);
 }
 
 function createDraft() {
@@ -1443,7 +1454,6 @@ function draftsKeydown(e: KeyboardEvent) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if ((document.activeElement as HTMLElement | null)?.isContentEditable) return; // naming a group
   const all = tiles();
-  const cols = tileColumns();
   switch (e.key) {
     case "n":
     case "N":
@@ -1465,11 +1475,11 @@ function draftsKeydown(e: KeyboardEvent) {
       return;
     case "ArrowDown":
       e.preventDefault();
-      if (draftsFocus + cols < all.length) selectTile(draftsFocus + cols);
+      moveVertical(1);
       return;
     case "ArrowUp":
       e.preventDefault();
-      if (draftsFocus - cols >= 0) selectTile(draftsFocus - cols);
+      moveVertical(-1);
       return;
     case "Enter": {
       const t = all[draftsFocus];
