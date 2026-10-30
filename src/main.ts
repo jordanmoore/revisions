@@ -133,8 +133,10 @@ function mountEditor(d: Doc) {
 
   // "Untitled" is a placeholder, not text, so a click lands the caret at the start and typing names the draft
   titleEl.textContent = doc.title === "Untitled" ? "" : doc.title;
+  setPageTitle(doc.title);
   titleEl.addEventListener("input", () => {
     doc.title = titleEl.textContent?.trim() || "Untitled";
+    setPageTitle(doc.title);
     markDirty();
   });
   bankedCountEl.addEventListener("click", () => toggleBankedOnly());
@@ -1277,8 +1279,14 @@ function sectionHtml(group: Group | null, docs: Doc[]): string {
   return `<section class="section" ${group ? `data-group="${group.id}"` : ""}>${heading}${body}</section>`;
 }
 
+/** The browser tab reads the draft's name inside a draft, and the app's name elsewhere. */
+function setPageTitle(section?: string) {
+  document.title = section ? `${section} · Revisions` : "Revisions";
+}
+
 function mountDrafts(focusGroupId?: string) {
   view = "drafts";
+  setPageTitle();
   app.dataset.theme = globalDark ? "dark" : "light";
   const docs = [...loadStore().docs].sort((a, b) => b.updatedAt - a.updatedAt);
   const gs = groups();
@@ -1491,6 +1499,7 @@ const revisionCount = () => loadStore().docs.reduce((n, d) => n + d.revs.filter(
 
 function mountLog() {
   view = "log";
+  setPageTitle("Every revision");
   app.dataset.theme = globalDark ? "dark" : "light";
   const docs = [...loadStore().docs].filter((d) => d.revs.some((r) => r.text.trim())).sort((a, b) => b.updatedAt - a.updatedAt);
   const rows = docs

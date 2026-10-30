@@ -123,9 +123,19 @@ body {
   gap: 8px;
 }
 
+/* the app name in the display face, as on the Paper artboards */
+.crumbs .project,
+.crumbs .home {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 75%;
+  font-size: 18px;
+  line-height: 18px;
+  letter-spacing: -0.005em;
+}
+
 .crumbs .project {
   color: var(--toner);
-  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -687,7 +697,6 @@ body {
 
 .crumbs .home {
   color: var(--toner);
-  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 8px;
