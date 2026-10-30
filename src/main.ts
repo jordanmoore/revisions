@@ -375,7 +375,7 @@ function renderChrome() {
       ["⌘B", focusRev.banked ? "Unbank" : "Bank"],
       ["↑ ↓", "Browse"],
       ["⌘⇧B", "View banked"],
-      ["Esc", "All drafts"],
+      ["Esc", "Dashboard"],
     ];
   } else if (mode === "browse") {
     hints = [
@@ -1142,10 +1142,10 @@ function editorCommands(): Command[] {
     { id: "banked", icon: CirclePile, label: mode === "banked" ? "Show all revisions" : "View banked only", key: "⌘⇧B", keywords: "filter hide show", run: () => toggleBankedOnly() },
     { id: "first", icon: ArrowUp, label: "Go to first revision", key: "⌘↑", run: () => browseTo(visibleRevs()[0].id) },
     { id: "last", icon: ArrowDown, label: "Go to latest revision", key: "⌘↓", run: () => goLatest() },
-    { id: "theme", icon: dark ? Sun : Moon, label: dark ? "Light mode for this draft" : "Dark mode for this draft", key: "⌘⇧D", keywords: "theme invert", run: () => toggleTheme() },
+    { id: "theme", icon: dark ? Sun : Moon, label: dark ? "Light theme" : "Dark theme", key: "⌘⇧D", keywords: "theme invert", run: () => toggleTheme() },
     { id: "rename", icon: TextCursorInput, label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
     { id: "newdraft", icon: Plus, label: "New draft", keywords: "create file", run: () => createDraft() },
-    { id: "home", icon: LayoutGrid, label: "Back to drafts", key: "Esc", keywords: "dashboard home", run: () => { save(); location.hash = "#/"; } },
+    { id: "home", icon: LayoutGrid, label: "Go to dashboard", key: "Esc", keywords: "drafts home back", run: () => { save(); location.hash = "#/"; } },
     ...otherDrafts(doc.id),
     { id: "delete", icon: Trash, label: "Delete this draft", danger: true, keywords: "remove", run: () => deleteDraft(doc.id, true) },
   );
@@ -1162,7 +1162,7 @@ function draftsCommands(): Command[] {
   }
   list.push(
     ...otherDrafts(selected?.id),
-    { id: "theme", icon: globalDark ? Sun : Moon, label: globalDark ? "Light mode for the app" : "Dark mode for the app", keywords: "theme invert", run: () => toggleGlobalTheme() },
+    { id: "theme", icon: globalDark ? Sun : Moon, label: globalDark ? "Light theme" : "Dark theme", keywords: "theme invert", run: () => toggleGlobalTheme() },
   );
   if (selected) {
     list.push({ id: "delete", icon: Trash, label: `Delete ${selected.title || "Untitled"}`, note: draftNote(selected), key: "⌫", danger: true, keywords: "remove", run: () => deleteDraft(selected.id) });
