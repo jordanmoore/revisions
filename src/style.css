@@ -376,7 +376,7 @@ body {
 
 .tick.is-banked .num {
   opacity: 1;
-  color: var(--ink);
+  color: var(--toner);
   width: 150px;
   white-space: normal;
   display: -webkit-box;
@@ -408,7 +408,7 @@ body {
 }
 
 .tick.is-focus.is-banked .num {
-  color: var(--ink);
+  color: var(--toner);
 }
 
 .tick:hover .num {
