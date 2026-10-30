@@ -357,7 +357,6 @@ function renderChrome() {
       ["⌘B", focusRev.banked ? "Unbank" : "Bank"],
       ["↑ ↓", "Browse"],
       ["⌘⇧B", "View banked"],
-      ["⌘⇧D", doc.dark ? "Light" : "Dark"],
       ["Esc", "All drafts"],
     ];
   } else if (mode === "browse") {
@@ -399,7 +398,6 @@ function renderActions(kind: ReturnType<typeof activeKind>) {
       ["bank", bankLabel],
       ["note", focusRev.note ? "Edit note" : "Note"],
       ["bankedOnly", "View banked", anyBanked],
-      ["theme", doc.dark ? "Light" : "Dark"],
     ];
   } else if (mode === "browse") {
     actions = [
