@@ -1,5 +1,5 @@
 import "./style.css";
-import { type Doc, type Rev, addDoc, ago, getDoc, loadStore, newDoc, newRev, removeDoc, saveStore } from "./store";
+import { type Doc, type Group, type Rev, addDoc, addGroup, ago, getDoc, getGroup, groups, loadStore, newDoc, newRev, removeDoc, removeGroup, saveStore } from "./store";
 import { type Command, closePalette, isPaletteOpen, openPalette } from "./palette";
 import {
   ArrowDown,
@@ -9,6 +9,9 @@ import {
   CircleDot,
   CirclePile,
   CornerDownRight,
+  Folder,
+  FolderMinus,
+  FolderPlus,
   LayoutGrid,
   Moon,
   Plus,
@@ -100,6 +103,7 @@ function mountEditor(d: Doc) {
       <div class="crumbs">
         <a class="home" href="#/"><img class="mark" src="${MARK}" alt="" />Revisions</a>
         <span>/</span>
+        ${getGroup(d.groupId) ? `<span class="group-crumb">${escapeHtml(getGroup(d.groupId)!.name)}</span><span>/</span>` : ""}
         <span class="title" contenteditable="plaintext-only" spellcheck="false" data-placeholder="Untitled"></span>
       </div>
       <div class="counter">
@@ -1148,6 +1152,7 @@ function editorCommands(): Command[] {
     { id: "rename", icon: TextCursorInput, label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
     { id: "newdraft", icon: Plus, label: "New draft", keywords: "create file", run: () => createDraft() },
     { id: "home", icon: LayoutGrid, label: "Go to dashboard", key: "Esc", keywords: "drafts home back", run: () => { save(); location.hash = "#/"; } },
+    ...groupCommands(doc),
     ...otherDrafts(doc.id),
     { id: "delete", icon: Trash, label: "Delete this draft", danger: true, keywords: "remove", run: () => deleteDraft(doc.id, true) },
   );
@@ -1162,12 +1167,17 @@ function draftsCommands(): Command[] {
   if (selected) {
     list.push({ id: "open", icon: CornerDownRight, label: `Open ${selected.title || "Untitled"}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; } });
   }
+  list.push({ id: "newgroup-top", icon: FolderPlus, label: "New group", key: "G", keywords: "create folder", run: () => createGroup() });
+  if (selected) list.push(...groupCommands(selected).map((c) => ({ ...c, label: c.label.replace(/^Move to/, `Move ${selected.title || "Untitled"} to`).replace(/^Remove from/, `Remove ${selected.title || "Untitled"} from`) })));
   list.push(
     ...otherDrafts(selected?.id),
     { id: "theme", icon: globalDark ? Sun : Moon, label: globalDark ? "Light theme" : "Dark theme", keywords: "theme invert", run: () => toggleGlobalTheme() },
   );
   if (selected) {
     list.push({ id: "delete", icon: Trash, label: `Delete ${selected.title || "Untitled"}`, note: draftNote(selected), key: "⌫", danger: true, keywords: "remove", run: () => deleteDraft(selected.id) });
+  }
+  for (const g of groups()) {
+    list.push({ id: `delgroup:${g.id}`, icon: Trash, label: `Delete group ${g.name}`, note: "drafts go back to Recents", danger: true, keywords: "remove folder", run: () => { if (window.confirm(`Delete the group “${g.name}”? Its drafts move back to Recents.`)) { removeGroup(g.id); mountDrafts(); } } });
   }
   return list;
 }
@@ -1245,32 +1255,71 @@ function tileHtml(d: Doc): string {
     </a>`;
 }
 
-function mountDrafts() {
+/** One section of the dashboard: a heading and its tiles (or a quiet line when a group is empty). */
+function sectionHtml(group: Group | null, docs: Doc[]): string {
+  const heading = group
+    ? `<h2 class="section-title" contenteditable="plaintext-only" spellcheck="false" data-group="${group.id}" data-placeholder="Untitled group">${escapeHtml(group.name === "Untitled group" ? "" : group.name)}</h2>`
+    : `<h2 class="section-title -fixed">Recents</h2>`;
+  const body = docs.length
+    ? `<div class="tiles">${docs.map(tileHtml).join("")}</div>`
+    : `<p class="section-empty">${group ? "No drafts here yet. Move one in from the command bar (⌘K)." : "Nothing recent. New drafts land here."}</p>`;
+  return `<section class="section" ${group ? `data-group="${group.id}"` : ""}>${heading}${body}</section>`;
+}
+
+function mountDrafts(focusGroupId?: string) {
   view = "drafts";
   app.dataset.theme = globalDark ? "dark" : "light";
   const docs = [...loadStore().docs].sort((a, b) => b.updatedAt - a.updatedAt);
+  const gs = groups();
+  const recents = docs.filter((d) => !getGroup(d.groupId));
+  const sections = [sectionHtml(null, recents), ...gs.map((g) => sectionHtml(g, docs.filter((d) => d.groupId === g.id)))];
   app.innerHTML = `
     <header class="topbar">
       <div class="crumbs"><span class="project"><img class="mark" src="${MARK}" alt="" />Revisions</span></div>
       <div class="counter">
         <span>${docs.length} ${docs.length === 1 ? "draft" : "drafts"}</span>
         <button type="button" class="theme-toggle" title="Dark or light for the whole app">${globalDark ? "Light" : "Dark"}</button>
-        <button type="button" class="act new-draft">New draft</button>
+        <button type="button" class="act new-group">New group</button>
+        <button type="button" class="act -primary new-draft">New draft</button>
       </div>
     </header>
     <main class="drafts">
       ${
-        docs.length
-          ? `<div class="tiles">${docs.map(tileHtml).join("")}</div>`
+        docs.length || gs.length
+          ? sections.join("")
           : `<div class="drafts-empty"><div class="mini-live is-empty">Write.</div><p>Nothing here yet. Start a draft and rewrite one sentence until it sings.</p></div>`
       }
     </main>
     <footer class="footer"><div class="hints">${
-      touch ? `<button type="button" class="act drafts-commands">Commands</button>` : `<div class="hint"><kbd>← ↑ ↓ →</kbd><span>Choose</span></div><div class="hint"><kbd>↵</kbd><span>Open</span></div><div class="hint"><kbd>⌫</kbd><span>Delete</span></div><div class="hint"><kbd>N</kbd><span>New draft</span></div><div class="hint"><kbd>⌘K</kbd><span>Commands</span></div>`
+      touch ? `<button type="button" class="act drafts-commands">Commands</button>` : `<div class="hint"><kbd>← ↑ ↓ →</kbd><span>Choose</span></div><div class="hint"><kbd>↵</kbd><span>Open</span></div><div class="hint"><kbd>⌫</kbd><span>Delete</span></div><div class="hint"><kbd>N</kbd><span>New draft</span></div><div class="hint"><kbd>G</kbd><span>New group</span></div><div class="hint"><kbd>⌘K</kbd><span>Commands</span></div>`
     }</div></footer>
   `;
   app.querySelector(".new-draft")!.addEventListener("click", createDraft);
+  app.querySelector(".new-group")!.addEventListener("click", () => createGroup());
   app.querySelector(".theme-toggle")!.addEventListener("click", toggleGlobalTheme);
+  // group headings rename in place: Return or blur saves, Esc puts the old name back
+  app.querySelectorAll<HTMLElement>(".section-title[data-group]").forEach((h) => {
+    const g = getGroup(h.dataset.group)!;
+    h.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        h.blur();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        h.textContent = g.name === "Untitled group" ? "" : g.name;
+        h.blur();
+      }
+      e.stopPropagation();
+    });
+    h.addEventListener("blur", () => {
+      g.name = h.textContent?.trim() || "Untitled group";
+      saveStore();
+    });
+  });
+  if (focusGroupId) {
+    const h = app.querySelector<HTMLElement>(`.section-title[data-group="${focusGroupId}"]`);
+    if (h) placeCaret(h, "end");
+  }
   app.querySelector(".drafts-commands")?.addEventListener("click", openCommands);
   app.querySelectorAll<HTMLButtonElement>(".tile-delete").forEach((b) => {
     b.addEventListener("click", (e) => {
@@ -1318,12 +1367,10 @@ function selectTile(i: number) {
 
 /** Tiles per row, read from the layout so it stays right at any width. */
 function tileColumns(): number {
-  const all = tiles();
-  if (all.length < 2) return 1;
-  const top = all[0].offsetTop;
-  let n = 1;
-  while (n < all.length && all[n].offsetTop === top) n++;
-  return n;
+  const grid = app.querySelector<HTMLElement>(".tiles");
+  if (!grid) return 1;
+  const cols = getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length;
+  return Math.max(1, cols);
 }
 
 function createDraft() {
@@ -1332,8 +1379,48 @@ function createDraft() {
   location.hash = `#/d/${d.id}`;
 }
 
+/** A new group floats to the top of the dashboard with its heading ready to be named. */
+function createGroup(withDoc?: Doc) {
+  const g = addGroup();
+  if (withDoc) {
+    withDoc.groupId = g.id;
+    saveStore();
+  }
+  if (view === "editor") {
+    save();
+    location.hash = "#/";
+    // the route change mounts the dashboard; then land in the new heading
+    window.setTimeout(() => {
+      const h = app.querySelector<HTMLElement>(`.section-title[data-group="${g.id}"]`);
+      if (h) placeCaret(h, "end");
+    }, 0);
+  } else mountDrafts(g.id);
+}
+
+function moveToGroup(d: Doc, groupId: string | undefined) {
+  if (groupId) d.groupId = groupId;
+  else delete d.groupId;
+  d.updatedAt = Date.now();
+  saveStore();
+  if (view === "drafts") mountDrafts();
+  else mountEditor(d);
+}
+
+/** Group commands for one draft: move it into any group, a new one, or out of its group. */
+function groupCommands(d: Doc): Command[] {
+  const list: Command[] = groups()
+    .filter((g) => g.id !== d.groupId)
+    .map((g) => ({ id: `move:${g.id}`, icon: Folder, label: `Move to ${g.name}`, keywords: "group", run: () => moveToGroup(d, g.id) }));
+  list.push({ id: "newgroup", icon: FolderPlus, label: "Move to a new group", keywords: "group create", run: () => createGroup(d) });
+  if (getGroup(d.groupId)) {
+    list.push({ id: "ungroup", icon: FolderMinus, label: `Remove from ${getGroup(d.groupId)!.name}`, keywords: "group recents", run: () => moveToGroup(d, undefined) });
+  }
+  return list;
+}
+
 function draftsKeydown(e: KeyboardEvent) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if ((document.activeElement as HTMLElement | null)?.isContentEditable) return; // naming a group
   const all = tiles();
   const cols = tileColumns();
   switch (e.key) {
@@ -1341,6 +1428,11 @@ function draftsKeydown(e: KeyboardEvent) {
     case "N":
       e.preventDefault();
       createDraft();
+      return;
+    case "g":
+    case "G":
+      e.preventDefault();
+      createGroup();
       return;
     case "ArrowRight":
       e.preventDefault();

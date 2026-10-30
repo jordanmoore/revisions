@@ -1,8 +1,9 @@
 // Drafts live in localStorage as one list. Earlier builds stored a single doc; that gets migrated.
 
 export type Rev = { id: string; text: string; banked: boolean; note: string; createdAt: number };
-export type Doc = { id: string; title: string; revs: Rev[]; createdAt: number; updatedAt: number; dark?: boolean };
-type Store = { docs: Doc[] };
+export type Doc = { id: string; title: string; revs: Rev[]; createdAt: number; updatedAt: number; dark?: boolean; groupId?: string };
+export type Group = { id: string; name: string; createdAt: number };
+type Store = { docs: Doc[]; groups?: Group[] };
 
 const KEY = "revisions:drafts";
 const LEGACY_KEY = "revisions:doc";
@@ -71,6 +72,33 @@ export function addDoc(doc: Doc) {
 export function removeDoc(id: string) {
   const s = loadStore();
   s.docs = s.docs.filter((d) => d.id !== id);
+  saveStore();
+}
+
+// ---------- groups ----------
+
+export function groups(): Group[] {
+  const s = loadStore();
+  if (!s.groups) s.groups = [];
+  return s.groups;
+}
+
+export function getGroup(id: string | undefined): Group | undefined {
+  return id ? groups().find((g) => g.id === id) : undefined;
+}
+
+export function addGroup(name = "Untitled group"): Group {
+  const g: Group = { id: uid(), name, createdAt: Date.now() };
+  groups().unshift(g);
+  saveStore();
+  return g;
+}
+
+/** Drafts in the group go back to Recents. */
+export function removeGroup(id: string) {
+  const s = loadStore();
+  s.groups = groups().filter((g) => g.id !== id);
+  for (const d of s.docs) if (d.groupId === id) delete d.groupId;
   saveStore();
 }
 
