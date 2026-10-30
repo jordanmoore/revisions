@@ -24,6 +24,33 @@
   --font-script: "Permanent Marker", cursive;
 
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --paper-0: rgb(255 255 255 / 0);
+}
+
+/* a draft written white on black: the editor inverts, the pens brighten a touch */
+#app[data-theme="dark"],
+.tile.is-dark .mini {
+  --paper: #141414;
+  --toner: #ffffff;
+  --faded: #8a8a86;
+  --faded-2: #4a4a48;
+  --rule: #333331;
+  --ink: #ff4a3d;
+  --ballpoint: #5b78ff;
+  --paper-0: rgb(20 20 20 / 0);
+}
+
+#app[data-theme="dark"] {
+  background: var(--paper);
+  color: var(--toner);
+}
+
+#app[data-theme="dark"] .crumbs .mark {
+  filter: invert(1);
+}
+
+#app[data-theme="dark"] .crumbs [contenteditable]:focus {
+  background: #222;
 }
 
 /* Jordan's Mac has Helvetica Neue Condensed Bold installed; everyone else gets Archivo pulled in to 75%. */
@@ -139,6 +166,21 @@ body {
   color: var(--ink);
 }
 
+.theme-toggle {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--faded);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.theme-toggle:hover {
+  color: var(--toner);
+}
+
 .footer {
   height: 72px;
   padding: 28px 48px;
@@ -220,12 +262,12 @@ body {
 
 .stage::before {
   top: 0;
-  background: linear-gradient(to bottom, var(--paper), rgb(255 255 255 / 0));
+  background: linear-gradient(to bottom, var(--paper), var(--paper-0));
 }
 
 .stage::after {
   bottom: 0;
-  background: linear-gradient(to top, var(--paper), rgb(255 255 255 / 0));
+  background: linear-gradient(to top, var(--paper), var(--paper-0));
   opacity: 0;
   transition: opacity 0.4s;
 }
@@ -469,7 +511,7 @@ body {
 /* highlighter pen for the word hop */
 .sentence::selection {
   background: var(--highlighter);
-  color: var(--toner);
+  color: #141414;
 }
 
 /* ink marks: strikes and the bank underline */
@@ -653,8 +695,20 @@ body {
   padding: 0 28px;
 }
 
-.tile:hover .mini {
-  border-color: var(--toner);
+.tile:hover .mini,
+.tile.is-selected .mini {
+  border-color: #141414;
+}
+
+.tile.is-dark .mini {
+  border-color: #141414;
+}
+
+.tile.is-dark:hover .mini,
+.tile.is-dark.is-selected .mini {
+  border-color: #141414;
+  outline: 2px solid #141414;
+  outline-offset: 2px;
 }
 
 .mini-stream {
@@ -741,10 +795,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* keyboard selection: same ring as hover, so arrows and the mouse read the same */
-.tile.is-selected .mini {
-  border-color: var(--toner);
-}
+
 
 .tile-delete {
   margin-left: auto;

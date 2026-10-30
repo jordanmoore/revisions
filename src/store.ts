@@ -1,7 +1,7 @@
 // Drafts live in localStorage as one list. Earlier builds stored a single doc; that gets migrated.
 
 export type Rev = { id: string; text: string; banked: boolean; note: string; createdAt: number };
-export type Doc = { id: string; title: string; revs: Rev[]; createdAt: number; updatedAt: number };
+export type Doc = { id: string; title: string; revs: Rev[]; createdAt: number; updatedAt: number; dark?: boolean };
 type Store = { docs: Doc[] };
 
 const KEY = "revisions:drafts";

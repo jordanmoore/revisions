@@ -26,6 +26,7 @@ The app opens on **Drafts**, a dashboard of every draft as a shrunken editor til
 | `Tab` / `⇧Tab` | Across to the note margin / back to the sentence | Edit the note on the browsed line |
 | `⌘B` | Bank / unbank the live line | Bank / unbank (bare `B` also works) |
 | `⌘⇧B` | View banked | View banked |
+| `⌘⇧D` | Dark or light, for this draft only; its tile on the Drafts page follows | |
 Words in the live line that differ from the previous revision are written in the blue pen. Once a line drifts more than halfway from the previous revision it counts as a rewrite and stays unmarked until you commit.
 | `↑` `↓` | Browse history (from the first / last visual line of the sentence) | Move between revisions |
 | `⌘↑` `⌘↓` | Jump to the very first revision / back to the latest | Same |

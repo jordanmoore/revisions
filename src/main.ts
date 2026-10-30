@@ -88,6 +88,7 @@ function mountEditor(d: Doc) {
         <span class="rev-label"></span>
         <span class="banked-count" title="Show banked only (⌘⇧B)"></span>
         <span class="status"></span>
+        <button type="button" class="theme-toggle" title="Dark or light, for this draft only (⌘⇧D)"></button>
       </div>
     </header>
     <main class="stage">
@@ -113,6 +114,10 @@ function mountEditor(d: Doc) {
     markDirty();
   });
   bankedCountEl.addEventListener("click", () => toggleBankedOnly());
+  const themeEl = $(".theme-toggle");
+  themeEl.addEventListener("pointerdown", (e) => e.preventDefault()); // keep the caret where it is
+  themeEl.addEventListener("click", () => toggleTheme());
+  applyTheme();
 
   // clicking empty stage puts you back on the live line
   stageEl.addEventListener("mousedown", (e) => {
@@ -352,6 +357,7 @@ function renderChrome() {
       ["⌘B", focusRev.banked ? "Unbank" : "Bank"],
       ["↑ ↓", "Browse"],
       ["⌘⇧B", "View banked"],
+      ["⌘⇧D", doc.dark ? "Light" : "Dark"],
       ["Esc", "All drafts"],
     ];
   } else if (mode === "browse") {
@@ -376,7 +382,7 @@ function renderChrome() {
   hintsEl.innerHTML = hints.map(([k, l]) => `<div class="hint"><kbd>${k}</kbd><span>${l}</span></div>`).join("");
 }
 
-type Action = "bank" | "note" | "done" | "bankedOnly" | "restore" | "latest" | "all";
+type Action = "bank" | "note" | "done" | "bankedOnly" | "restore" | "latest" | "all" | "theme";
 
 function renderActions(kind: ReturnType<typeof activeKind>) {
   const focusRev = revById(focusId);
@@ -393,6 +399,7 @@ function renderActions(kind: ReturnType<typeof activeKind>) {
       ["bank", bankLabel],
       ["note", focusRev.note ? "Edit note" : "Note"],
       ["bankedOnly", "View banked", anyBanked],
+      ["theme", doc.dark ? "Light" : "Dark"],
     ];
   } else if (mode === "browse") {
     actions = [
@@ -438,6 +445,9 @@ function runAction(a: Action) {
       break;
     case "latest":
       goLatest();
+      break;
+    case "theme":
+      toggleTheme();
       break;
   }
 }
@@ -744,6 +754,23 @@ function markChanges() {
   if (ranges.length) highlightsApi.set("revised", new HighlightClass(...ranges));
 }
 
+// ---------- dark mode, per draft ----------
+// A draft remembers whether it is written white on black. Only the editor inverts;
+// the dashboard stays light and shows the draft's tile the way the draft looks.
+
+function applyTheme() {
+  app.dataset.theme = view === "editor" && doc.dark ? "dark" : "light";
+  const b = app.querySelector<HTMLButtonElement>(".theme-toggle");
+  if (b) b.textContent = doc.dark ? "Light" : "Dark";
+}
+
+function toggleTheme() {
+  doc.dark = !doc.dark;
+  markDirty();
+  applyTheme();
+  renderChrome();
+}
+
 function goLatest() {
   mode = "edit";
   focusId = live().id;
@@ -920,6 +947,11 @@ function editorKeydown(e: KeyboardEvent) {
     else restore();
     return;
   }
+  if (meta && e.shiftKey && (e.key === "d" || e.key === "D")) {
+    e.preventDefault();
+    toggleTheme();
+    return;
+  }
   // ⌘↑ / ⌘↓ : jump to the very first or the very latest revision
   if (meta && !e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
     e.preventDefault();
@@ -1064,7 +1096,7 @@ function tileHtml(d: Doc): string {
   if (banked) parts.push(`${banked} banked`);
   parts.push(ago(d.updatedAt));
   return `
-    <a class="tile" href="#/d/${d.id}" data-id="${d.id}">
+    <a class="tile${d.dark ? " is-dark" : ""}" href="#/d/${d.id}" data-id="${d.id}">
       <div class="mini">
         <div class="mini-stream">${prevLine(older, "is-older")}${prevLine(prev, "")}${latestHtml}</div>
       </div>
@@ -1080,6 +1112,7 @@ function tileHtml(d: Doc): string {
 
 function mountDrafts() {
   view = "drafts";
+  app.dataset.theme = "light";
   const docs = [...loadStore().docs].sort((a, b) => b.updatedAt - a.updatedAt);
   app.innerHTML = `
     <header class="topbar">
