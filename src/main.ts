@@ -10,11 +10,11 @@ import {
   CircleDot,
   CirclePile,
   CornerDownRight,
-  Folder,
-  FolderMinus,
-  FolderPlus,
+  LineStyle,
+  SquareDashed,
+  SquareDashedPlus,
   LayoutGrid,
-  ScrollText,
+  SquareDashedX,
   Moon,
   Plus,
   SquareText,
@@ -1163,7 +1163,7 @@ function editorCommands(): Command[] {
     { id: "rename", icon: TextCursorInput, label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
     { id: "newdraft", icon: Plus, label: "New draft", keywords: "create file", run: () => createDraft() },
     { id: "home", icon: LayoutGrid, label: "Go to dashboard", key: "Esc", keywords: "drafts home back", run: () => { save(); location.hash = "#/"; } },
-    { id: "log", icon: ScrollText, label: "Every revision", keywords: "log history all sentences", run: () => { save(); location.hash = "#/log"; } },
+    { id: "log", icon: LineStyle, label: "Every revision", keywords: "log history all sentences", run: () => { save(); location.hash = "#/log"; } },
     ...groupCommands(doc),
     ...otherDrafts(doc.id),
     { id: "delete", icon: Trash, label: "Delete this draft", danger: true, keywords: "remove", run: () => deleteDraft(doc.id, true) },
@@ -1179,8 +1179,8 @@ function draftsCommands(): Command[] {
   if (selected) {
     list.push({ id: "open", icon: CornerDownRight, label: `Open ${selected.title || "Untitled"}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; } });
   }
-  list.push({ id: "newgroup-top", icon: FolderPlus, label: "New group", key: "G", keywords: "create folder", run: () => createGroup() });
-  list.push({ id: "log", icon: ScrollText, label: "Every revision", keywords: "log history all sentences", run: () => { location.hash = "#/log"; } });
+  list.push({ id: "newgroup-top", icon: SquareDashedPlus, label: "New group", key: "G", keywords: "create folder", run: () => createGroup() });
+  list.push({ id: "log", icon: LineStyle, label: "Every revision", keywords: "log history all sentences", run: () => { location.hash = "#/log"; } });
   if (selected) list.push(...groupCommands(selected).map((c) => ({ ...c, label: c.label.replace(/^Move to/, `Move ${selected.title || "Untitled"} to`).replace(/^Remove from/, `Remove ${selected.title || "Untitled"} from`) })));
   list.push(
     ...otherDrafts(selected?.id),
@@ -1442,10 +1442,10 @@ function moveToGroup(d: Doc, groupId: string | undefined) {
 function groupCommands(d: Doc): Command[] {
   const list: Command[] = groups()
     .filter((g) => g.id !== d.groupId)
-    .map((g) => ({ id: `move:${g.id}`, icon: Folder, label: `Move to ${g.name}`, keywords: "group", run: () => moveToGroup(d, g.id) }));
-  list.push({ id: "newgroup", icon: FolderPlus, label: "Move to a new group", keywords: "group create", run: () => createGroup(d) });
+    .map((g) => ({ id: `move:${g.id}`, icon: SquareDashed, label: `Move to ${g.name}`, keywords: "group", run: () => moveToGroup(d, g.id) }));
+  list.push({ id: "newgroup", icon: SquareDashedPlus, label: "Move to a new group", keywords: "group create", run: () => createGroup(d) });
   if (getGroup(d.groupId)) {
-    list.push({ id: "ungroup", icon: FolderMinus, label: `Remove from ${getGroup(d.groupId)!.name}`, keywords: "group recents", run: () => moveToGroup(d, undefined) });
+    list.push({ id: "ungroup", icon: SquareDashedX, label: `Remove from ${getGroup(d.groupId)!.name}`, keywords: "group recents", run: () => moveToGroup(d, undefined) });
   }
   return list;
 }
