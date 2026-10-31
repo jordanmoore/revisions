@@ -1112,16 +1112,54 @@ body {
   font-family: var(--font-ui);
 }
 
+.palette-head {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--surface-line);
+  padding-left: 1.1em;
+}
+
+/* the row you drilled into, as a chip before the box */
+.palette-crumb {
+  flex: 0 0 auto;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 20px;
+  padding: 0 7px;
+  border-radius: 4px;
+  background: var(--chip);
+  color: var(--toner);
+}
+
 .palette-input {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   border: none;
   background: transparent;
   color: var(--toner);
   font-family: var(--font-ui);
   font-size: 16px;
-  padding: 0.85em 1.1em;
+  padding: 0.85em 1.1em 0.85em 0;
   outline: none;
-  border-bottom: 1px solid var(--surface-line);
+}
+
+.palette-crumb:not([hidden]) + .palette-input {
+  padding-left: 0.6em;
+}
+
+.palette-results[hidden] {
+  display: none;
+}
+
+/* rows with more behind them */
+.palette-more {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  color: var(--faded-2);
 }
 
 .palette-input::placeholder {

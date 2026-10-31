@@ -1134,7 +1134,30 @@ function otherDrafts(exceptId?: string): Command[] {
       run: () => {
         location.hash = `#/d/${d.id}`;
       },
+      crumb: d.title || "Untitled",
+      children: () => draftActions(d),
     }));
+}
+
+/**
+ * Everything the bar can do to one draft without opening it, reached with Tab on
+ * its row: open, rename in place, move between groups, delete.
+ */
+function draftActions(d: Doc): Command[] {
+  const name = d.title || "Untitled";
+  return [
+    { id: "open", icon: CornerDownRight, label: "Open", note: draftNote(d), key: "↵", run: () => { location.hash = `#/d/${d.id}`; } },
+    { id: "rename", icon: TextCursorInput, label: "Rename", keywords: "title name", prompt: { placeholder: "Untitled", value: d.title, submit: (t) => renameDraft(d, t) } },
+    ...groupCommands(d),
+    { id: "delete", icon: Trash, label: `Delete ${name}`, danger: true, keywords: "remove", run: () => deleteDraft(d.id, view === "editor" && doc.id === d.id) },
+  ];
+}
+
+function renameDraft(d: Doc, title: string) {
+  d.title = title;
+  saveStore();
+  if (view === "drafts") mountDrafts();
+  else if (doc.id === d.id) mountEditor(d);
 }
 
 function editorCommands(): Command[] {
@@ -1177,7 +1200,7 @@ function draftsCommands(): Command[] {
   const selected = selectedId ? getDoc(selectedId) : undefined;
   const list: Command[] = [{ id: "newdraft", icon: Plus, label: "New draft", key: "N", keywords: "create file", run: () => createDraft() }];
   if (selected) {
-    list.push({ id: "open", icon: CornerDownRight, label: `Open ${selected.title || "Untitled"}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; } });
+    list.push({ id: "open", icon: CornerDownRight, label: `Open ${selected.title || "Untitled"}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; }, crumb: selected.title || "Untitled", children: () => draftActions(selected) });
   }
   list.push({ id: "newgroup-top", icon: SquareDashedPlus, label: "New group", key: "G", keywords: "create folder", run: () => createGroup() });
   list.push({ id: "log", icon: LineStyle, label: "Every revision", keywords: "log history all sentences", run: () => { location.hash = "#/log"; } });
@@ -1366,7 +1389,7 @@ function deleteDraft(id: string, fromEditor = false) {
     if (fromEditor) {
       dirty = false; // nothing left to save
       location.hash = "#/";
-    } else mountDrafts();
+    } else if (view === "drafts") mountDrafts();
   }
 }
 
@@ -1435,7 +1458,7 @@ function moveToGroup(d: Doc, groupId: string | undefined) {
   d.updatedAt = Date.now();
   saveStore();
   if (view === "drafts") mountDrafts();
-  else mountEditor(d);
+  else if (doc.id === d.id) mountEditor(d);
 }
 
 /** Group commands for one draft: move it into any group, a new one, or out of its group. */
