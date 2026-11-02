@@ -63,10 +63,6 @@
   filter: invert(1);
 }
 
-#app[data-theme="dark"] .crumbs [contenteditable]:focus {
-  background: #222;
-}
-
 /* Jordan's Mac has Helvetica Neue Condensed Bold installed; everyone else gets Archivo pulled in to 75%. */
 @font-face {
   font-family: "Helvetica Neue Condensed";
@@ -149,8 +145,10 @@ body {
   margin: 0 -2px;
 }
 
+/* the rename field shows itself on hover and while editing: the rule colour at 48% (#dcdcd87a on the light page) */
+.crumbs [contenteditable]:hover,
 .crumbs [contenteditable]:focus {
-  background: #fff;
+  background: color-mix(in srgb, var(--rule) 48%, transparent);
 }
 
 .crumbs .title:empty::before {
