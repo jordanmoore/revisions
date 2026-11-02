@@ -685,9 +685,10 @@ body {
     padding-top: 0;
   }
 
-  .tape {
-    right: calc(50% + var(--col) / 2 + 40px);
-    width: 140px;
+  /* the tape wants a real left margin and a keyboard: desktop widths only */
+  .tape,
+  .counter .tape-count {
+    display: none;
   }
 
   .restore-hint {
@@ -770,10 +771,6 @@ body {
   }
 
   .tick .num {
-    display: none;
-  }
-
-  .tape {
     display: none;
   }
 }

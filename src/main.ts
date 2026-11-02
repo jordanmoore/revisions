@@ -1084,6 +1084,7 @@ function settleTape() {
 
 /** ⇧Tab: write on a fresh bit of tape, or the first blank one; at five, the last one. */
 function addTape() {
+  if (getComputedStyle(tapeEl).display === "none") return; // no margin for it at this width
   const kind = activeKind();
   if (kind === "sentence") tapeReturn = selectionOffsets(document.activeElement as HTMLElement);
   if (doc.tapeHidden) delete doc.tapeHidden;
@@ -1382,8 +1383,10 @@ function editorCommands(): Command[] {
   list.push(
     { id: "bank", icon: CircleDot, label: focusRev.banked ? "Unbank this revision" : "Bank this revision", key: editing ? "⌘B" : "B", keywords: "keep save star", run: () => toggleBank() },
     { id: "note", icon: SquareText, label: focusRev.note ? "Edit note" : "Add a note", key: "Tab", keywords: "margin comment", run: () => focusNote() },
-    { id: "tape", icon: StickyNote, label: "Tape a word to the margin", key: "⇧Tab", keywords: "sticky keep word left", run: () => addTape() },
-    ...(tape().some(Boolean)
+    ...(getComputedStyle(tapeEl).display === "none"
+      ? []
+      : [{ id: "tape", icon: StickyNote, label: "Tape a word to the margin", key: "⇧Tab", keywords: "sticky keep word left", run: () => addTape() }]),
+    ...(tape().some(Boolean) && getComputedStyle(tapeEl).display !== "none"
       ? [{ id: "tapetoggle", icon: doc.tapeHidden ? Eye : EyeOff, label: doc.tapeHidden ? "Show the tape" : "Hide the tape", key: "⌘⇧L", keywords: "sticky words toggle", run: () => toggleTape() }]
       : []),
     { id: "banked", icon: CirclePile, label: mode === "banked" ? "Show all revisions" : "View banked only", key: "⌘⇧B", keywords: "filter hide show", run: () => toggleBankedOnly() },

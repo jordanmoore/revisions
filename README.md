@@ -34,7 +34,7 @@ The app opens on **Drafts**, a dashboard of every draft as a shrunken editor til
 | `Esc` | Leave the note | Back to the latest line; in banked-only, back to all revisions |
 | `⇧↵` | Soft line break inside the sentence | |
 
-**Tape** is for words you want to keep in sight while you revise: `⇧Tab` sticks a strip of sticky-note yellow to the left of the sentence and you write one word on it in the marker pen (hyphens allowed, twenty letters at most). Up to five strips, staggered and slightly askew, and they stay level with the live line as the draft grows. `⌘⇧L`, the "on tape" count in the top bar, or the command bar hides and shows them; the words are kept with the draft either way.
+**Tape** is for words you want to keep in sight while you revise: `⇧Tab` sticks a strip of sticky-note yellow to the left of the sentence and you write one word on it in the marker pen (hyphens allowed, twenty letters at most). Up to five strips, staggered and slightly askew, and they stay level with the live line as the draft grows. `⌘⇧L`, the "on tape" count in the top bar, or the command bar hides and shows them; the words are kept with the draft either way. The tape needs a real left margin and a keyboard, so it only appears at desktop widths.
 
 Bank and note are independent: a line can have either, both, or neither. Banked lines are never struck through, and in the timeline rail a banked tick shows its sentence (two lines, 150px) instead of its number, so the rail doubles as a list of keepers.
 
