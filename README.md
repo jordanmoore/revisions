@@ -40,7 +40,7 @@ Bank and note are independent: a line can have either, both, or neither. Banked 
 
 Words in the live line that differ from the previous revision are written in the blue pen. Once a line drifts more than halfway from the previous revision it counts as a rewrite and stays unmarked until you commit.
 
-Drafts can be gathered into **groups**. The dashboard shows Recents (drafts in no group) first, then each group newest first with a big faded heading you can rename in place. `G` or New group makes one; the command bar moves a draft into a group, into a new group, or back out, and can delete a group (its drafts return to Recents). The editor crumb shows the draft's group.
+Drafts can be gathered into **groups**. The dashboard shows Recents (drafts in no group) first, then each group newest first with a big faded heading you can rename in place. `G` or New group makes one (Esc on a group you have not named or put anything in takes it straight back off); the command bar moves a draft into a group, into a new group, or back out, and can delete a group (its drafts return to Recents). The editor crumb shows the draft's group.
 
 **Every revision** (`#/log`, or the revision count on the Drafts page, or "Every revision" in the command bar) lays out every sentence from every draft as one flowing record: the draft's name, then each revision in order, faded except the banked ones. Click a sentence to open that draft browsing at that revision.
 

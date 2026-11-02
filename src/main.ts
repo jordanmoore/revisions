@@ -1582,6 +1582,14 @@ function mountDrafts(focusGroupId?: string) {
         h.blur();
       } else if (e.key === "Escape") {
         e.preventDefault();
+        const unnamed = g.name === "Untitled group" && !h.textContent?.trim();
+        const empty = !loadStore().docs.some((d) => d.groupId === g.id);
+        if (unnamed && empty) {
+          // nothing named, nothing in it: Esc takes the group straight back off the page
+          removeGroup(g.id);
+          mountDrafts();
+          return;
+        }
         h.textContent = g.name === "Untitled group" ? "" : g.name;
         h.blur();
       }
