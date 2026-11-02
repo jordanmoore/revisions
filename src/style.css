@@ -812,20 +812,24 @@ body {
   gap: 64px;
 }
 
-/* a section per group, Recents first; the label is written in the marker hand, red ink, full strength */
+/* a section per group, Recents first; the label is written in the marker hand: your groups at full strength, Recents at 40% */
 .section-title {
   margin: 0 0 40px;
   font-family: var(--font-script);
   font-weight: 400;
   font-size: 22px;
   line-height: 28px;
-  color: var(--ink);
-  caret-color: var(--ink);
+  color: var(--toner);
+  caret-color: var(--toner);
   min-width: 96px;
   display: inline-block;
   outline: none;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.section-title.-fixed {
+  opacity: 0.4;
 }
 
 .section-title[contenteditable]:hover,
@@ -835,7 +839,7 @@ body {
 
 .section-title:empty::before {
   content: attr(data-placeholder);
-  color: color-mix(in srgb, var(--ink) 40%, transparent);
+  color: color-mix(in srgb, var(--toner) 40%, transparent);
 }
 
 .section-empty {
