@@ -1011,6 +1011,8 @@ const SHIFTS = [0, -12, -4, -16, -8];
 let tapeReturn: { start: number; end: number } | null = null;
 
 const tape = () => doc.tape ?? [];
+/** Strips on the page and not folded away or squeezed out by the width. */
+const tapeShowing = () => tape().some(Boolean) && !doc.tapeHidden && getComputedStyle(tapeEl).display !== "none";
 /** One line of marker: whitespace collapsed, nothing before the first letter, capped so it fits on the tape. */
 const cleanWord = (s: string) => Array.from(s.replace(/\s+/g, " ").replace(/^\s+/, "")).slice(0, TAPE_CHARS).join("");
 const overLimit = (s: string) => Array.from(s.replace(/\s+/g, " ").replace(/^\s+/, "")).length > TAPE_CHARS;
@@ -1183,6 +1185,15 @@ function tapeKeydown(e: KeyboardEvent) {
       if (next) placeCaretAtEnd(next);
       return;
     }
+    case "ArrowRight": {
+      // → off the end of a strip goes back across to the sentence
+      const { text, start, end } = selectionOffsets(el);
+      if (start === end && end === text.length) {
+        e.preventDefault();
+        finishTape();
+      }
+      return;
+    }
   }
 }
 
@@ -1248,6 +1259,17 @@ function editorKeydown(e: KeyboardEvent) {
     return;
   }
   if (meta || e.altKey) return;
+
+  // ← from the very start of the sentence pops the caret out onto the tape
+  if (e.key === "ArrowLeft" && !e.shiftKey && kind === "sentence" && tapeShowing()) {
+    const { start, end } = selectionOffsets(document.activeElement as HTMLElement);
+    if (start === 0 && end === 0) {
+      e.preventDefault();
+      tapeReturn = { start: 0, end: 0 };
+      placeCaretAtEnd(tapeEl.firstElementChild as HTMLElement);
+      return;
+    }
+  }
 
   switch (e.key) {
     case "Enter": {

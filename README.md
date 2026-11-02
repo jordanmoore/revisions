@@ -24,7 +24,7 @@ The app opens on **Drafts**, a dashboard of every draft as a shrunken editor til
 | `⌥ ←` `⌥ →` | Hop the highlight a word at a time; typing replaces the highlighted word, releasing ⌥ gives you ordinary arrows again | |
 | `⌃⌥ ←` `⌃⌥ →` | Jump the highlight to the first / last word | |
 | `Tab` | Across to the note margin, and back to the sentence | Edit the note on the browsed line |
-| `⇧Tab` | Tape the highlighted words to the left margin, or open a blank strip to write on (`⇧Tab` again on the tape adds another, up to five; `↵` or `Esc` comes back; `⌫` on a blank strip peels it off) | Same |
+| `⇧Tab` | Tape the highlighted words to the left margin, or open a blank strip to write on (`⇧Tab` again on the tape adds another, up to five; `↵` or `Esc` comes back; `⌫` on a blank strip peels it off; `←` from the very start of the sentence lands on the top strip too, and `→` off the end of a strip comes back) | Same |
 | `⌘⇧L` | Hide or show the tape | Same |
 | `⌘B` | Bank / unbank the live line | Bank / unbank (bare `B` also works) |
 | `⌘⇧B` | View banked | View banked |
