@@ -10,6 +10,7 @@
   --ballpoint: #1d3fd6; /* blue biro: margin notes */
   --highlighter: #fff04a;
   --tape: #f7e45c; /* sticky-note yellow, for the words taped to the left margin */
+  --tape-grey: #ebebe7; /* masking tape, for the group labels on the Drafts page */
   --link: #0074d9; /* Possible Forms' link blue: the selected tile on the Drafts page */
 
   --rail-left: 48px;
@@ -55,6 +56,7 @@
 
 #app[data-theme="dark"] {
   --link: #6cb0ff; /* Possible Forms' night link */
+  --tape-grey: #d9d9d4;
   background: var(--paper);
   color: var(--toner);
 }
@@ -821,31 +823,49 @@ body {
   gap: 64px;
 }
 
-/* a section per group, Recents first; headings in the display face, faded like a watermark */
+/* a section per group, Recents first; the label is a strip of grey masking tape, same hand as the yellow ones */
 .section-title {
-  margin: 0 0 40px;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-stretch: 75%;
-  font-size: 28px;
-  line-height: 26px;
-  letter-spacing: -0.005em;
-  color: var(--toner);
-  opacity: 0.2;
-  outline: none;
-  min-width: 120px;
+  margin: 0 0 40px 2px;
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 28px;
+  color: #141414;
+  caret-color: #141414;
+  background: var(--tape-grey);
+  padding: 5px 18px 6px;
+  min-width: 96px;
   display: inline-block;
-  transition: opacity 0.2s;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  transform: rotate(-1.2deg);
+  transform-origin: left center;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+  clip-path: polygon(
+    3px 0, 100% 0, calc(100% - 2px) 16%, 100% 32%, calc(100% - 3px) 50%, 100% 66%, calc(100% - 2px) 84%, 100% 100%,
+    2px 100%, 0 84%, 3px 66%, 0 50%, 2px 32%, 0 16%
+  );
+  transition: transform 0.25s var(--ease);
 }
 
 .section-title[contenteditable]:hover,
 .section-title[contenteditable]:focus {
-  opacity: 0.6;
   cursor: text;
+}
+
+/* lifted straight while you write on it, like the yellow strips */
+.section-title[contenteditable]:focus {
+  transform: rotate(0deg) scale(1.03);
 }
 
 .section-title:empty::before {
   content: attr(data-placeholder);
+  color: rgb(20 20 20 / 0.35);
+}
+
+#app[data-theme="dark"] .section-title {
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.5);
 }
 
 .section-empty {
