@@ -10,6 +10,7 @@
   --ballpoint: #1d3fd6; /* blue biro: margin notes */
   --highlighter: #fff04a;
   --tape: #f7e45c; /* sticky-note yellow, for the words taped to the left margin */
+  --link: #0074d9; /* Possible Forms' link blue: the selected tile on the Drafts page */
 
   --rail-left: 48px;
   --col: 800px;
@@ -53,6 +54,7 @@
 }
 
 #app[data-theme="dark"] {
+  --link: #6cb0ff; /* Possible Forms' night link */
   background: var(--paper);
   color: var(--toner);
 }
@@ -1004,9 +1006,9 @@ body {
   padding: 0 28px;
 }
 
-/* the selection ring takes the page's ink, resolved on the tile before the mini swaps its palette */
+/* the selection ring takes the page's link blue, resolved on the tile before the mini swaps its palette */
 .tile {
-  --ring: var(--toner);
+  --ring: var(--link);
 }
 
 /* selected: the hairline darkens to 30% ink and a soft 5px halo at 10% sits flush against it (Paper, Tile) */
