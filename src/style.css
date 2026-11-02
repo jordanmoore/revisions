@@ -10,7 +10,6 @@
   --ballpoint: #1d3fd6; /* blue biro: margin notes */
   --highlighter: #fff04a;
   --tape: #f7e45c; /* sticky-note yellow, for the words taped to the left margin */
-  --tape-grey: #ebebe7; /* masking tape, for the group labels on the Drafts page */
   --link: #0074d9; /* Possible Forms' link blue: the selected tile on the Drafts page */
 
   --rail-left: 48px;
@@ -56,7 +55,6 @@
 
 #app[data-theme="dark"] {
   --link: #6cb0ff; /* Possible Forms' night link */
-  --tape-grey: #d9d9d4;
   background: var(--paper);
   color: var(--toner);
 }
@@ -814,30 +812,20 @@ body {
   gap: 64px;
 }
 
-/* a section per group, Recents first; the label is a strip of grey masking tape, same hand as the yellow ones */
+/* a section per group, Recents first; the label is written in the marker hand, red ink, full strength */
 .section-title {
-  margin: 0 0 40px 2px;
+  margin: 0 0 40px;
   font-family: var(--font-script);
   font-weight: 400;
   font-size: 22px;
   line-height: 28px;
-  color: #141414;
-  caret-color: #141414;
-  background: var(--tape-grey);
-  padding: 5px 18px 6px;
+  color: var(--ink);
+  caret-color: var(--ink);
   min-width: 96px;
   display: inline-block;
   outline: none;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  transform: rotate(-1.2deg);
-  transform-origin: left center;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
-  clip-path: polygon(
-    3px 0, 100% 0, calc(100% - 2px) 16%, 100% 32%, calc(100% - 3px) 50%, 100% 66%, calc(100% - 2px) 84%, 100% 100%,
-    2px 100%, 0 84%, 3px 66%, 0 50%, 2px 32%, 0 16%
-  );
-  transition: transform 0.25s var(--ease);
 }
 
 .section-title[contenteditable]:hover,
@@ -845,18 +833,9 @@ body {
   cursor: text;
 }
 
-/* lifted straight while you write on it, like the yellow strips */
-.section-title[contenteditable]:focus {
-  transform: rotate(0deg) scale(1.03);
-}
-
 .section-title:empty::before {
   content: attr(data-placeholder);
-  color: rgb(20 20 20 / 0.35);
-}
-
-#app[data-theme="dark"] .section-title {
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.5);
+  color: color-mix(in srgb, var(--ink) 40%, transparent);
 }
 
 .section-empty {
