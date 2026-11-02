@@ -551,8 +551,8 @@ body {
 
 .tape {
   position: absolute;
-  right: calc(50% + var(--col) / 2 + 48px); /* clear of the faint revision number */
-  width: 180px;
+  left: calc(var(--rail-left) + 40px); /* from just past the rail's dashes... */
+  right: calc(50% + var(--col) / 2 + 48px); /* ...to clear of the faint revision number */
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -583,8 +583,9 @@ body {
   padding: 5px 18px 6px;
   min-width: 64px;
   max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   outline: none;
   cursor: text;
   opacity: 0.96;
@@ -603,8 +604,31 @@ body {
   transform: translateX(var(--shift)) rotate(0deg) scale(1.04);
 }
 
+/* refused a character: a quick shake says so without a count */
+.tape-note.is-shaking {
+  animation: tape-shake 0.35s var(--ease);
+}
+
+@keyframes tape-shake {
+  0%, 100% { translate: 0; }
+  20% { translate: -5px; }
+  40% { translate: 5px; }
+  60% { translate: -3px; }
+  80% { translate: 3px; }
+}
+
+/* taped straight off the sentence: the strip lands */
+.tape-note.is-new {
+  animation: tape-land 0.3s var(--ease);
+}
+
+@keyframes tape-land {
+  from { scale: 1.12; opacity: 0.4; }
+  to { scale: 1; opacity: 0.96; }
+}
+
 .tape-note:empty::before {
-  content: "word";
+  content: "words";
   color: rgb(20 20 20 / 0.35);
   pointer-events: none;
 }

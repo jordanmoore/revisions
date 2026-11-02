@@ -388,7 +388,7 @@ function renderChrome() {
     const empty = !(document.activeElement as HTMLElement).textContent;
     hints = [
       ["↵", "Done"],
-      ...(tape().length < TAPE_MAX || empty ? [["⇧Tab", "Another word"] as [string, string]] : []),
+      ...(tape().length < TAPE_MAX || empty ? [["⇧Tab", "Another strip"] as [string, string]] : []),
       ...(empty ? [["⌫", "Peel it off"] as [string, string]] : []),
       ["Esc", "Back to sentence"],
     ];
@@ -406,7 +406,7 @@ function renderChrome() {
       ["⌥ ← →", "Hop words"],
       ["⌃⌥ ← →", "First / last word"],
       ["Tab", "Note"],
-      ["⇧Tab", "Tape a word"],
+      ["⇧Tab", "Tape"],
       ["⌘B", focusRev.banked ? "Unbank" : "Bank"],
       ["↑ ↓", "Browse"],
       ["⌘⇧B", "View banked"],
@@ -998,20 +998,30 @@ function caretEdge(el: HTMLElement): { first: boolean; last: boolean } {
   return { first: rect.top < box.top + lh * 0.9, last: rect.bottom > box.bottom - lh * 0.9 };
 }
 
-// ---------- tape: up to five words stuck to the left margin ----------
-// A word you want to keep in sight while you revise. ⇧Tab from the sentence sticks
-// a fresh bit of tape on; ⇧Tab again from the tape adds another. One word each,
-// hyphens allowed, and they follow the live line down the page.
+// ---------- tape: up to five strips stuck to the left margin ----------
+// Words you want to keep in sight while you revise. ⇧Tab from the sentence sticks
+// a fresh bit of tape on (or tapes the highlighted words straight off the line);
+// ⇧Tab again from the tape adds another. A few words each, capped so the strip
+// stays a strip, and they follow the live line down the page.
 
 const TAPE_MAX = 5;
-const TAPE_CHARS = 20;
+const TAPE_CHARS = 24;
 const TILTS = [-2.4, 1.6, -1.2, 2.2, -1.8];
 const SHIFTS = [0, -12, -4, -16, -8];
 let tapeReturn: { start: number; end: number } | null = null;
 
 const tape = () => doc.tape ?? [];
-/** One word only: letters, digits, apostrophes and hyphens, capped so it fits on the tape. */
-const cleanWord = (s: string) => Array.from(s.replace(/[^\p{L}\p{N}'’-]/gu, "")).slice(0, TAPE_CHARS).join("");
+/** One line of marker: whitespace collapsed, nothing before the first letter, capped so it fits on the tape. */
+const cleanWord = (s: string) => Array.from(s.replace(/\s+/g, " ").replace(/^\s+/, "")).slice(0, TAPE_CHARS).join("");
+const overLimit = (s: string) => Array.from(s.replace(/\s+/g, " ").replace(/^\s+/, "")).length > TAPE_CHARS;
+
+/** The strip refuses: a quick shake instead of a character count. */
+function shakeTape(el: HTMLElement) {
+  el.classList.remove("is-shaking");
+  void el.offsetWidth;
+  el.classList.add("is-shaking");
+  el.addEventListener("animationend", () => el.classList.remove("is-shaking"), { once: true });
+}
 
 function makeTape(): HTMLElement {
   const el = document.createElement("div");
@@ -1021,17 +1031,14 @@ function makeTape(): HTMLElement {
   el.addEventListener("input", () => {
     if (!el.isConnected) return;
     const raw = el.textContent ?? "";
-    // a space (typed, dictated or pasted) ends the word: one per strip
-    const broke = /\s/.test(raw);
-    const clean = cleanWord(broke ? raw.split(/\s/)[0] : raw);
+    const clean = cleanWord(raw);
     if (clean !== raw) {
       el.textContent = clean;
       placeCaretAtEnd(el);
     }
-    fitTape(el);
-    tape()[Number(el.dataset.i)] = clean;
+    if (overLimit(raw)) shakeTape(el);
+    tape()[Number(el.dataset.i)] = clean.trim();
     markDirty();
-    if (broke) finishTape();
   });
   el.addEventListener("focus", () => renderChrome());
   el.addEventListener("blur", () => {
@@ -1056,18 +1063,7 @@ function renderTape() {
     el.style.setProperty("--tilt", `${TILTS[i % TILTS.length]}deg`);
     el.style.setProperty("--shift", `${SHIFTS[i % SHIFTS.length]}px`);
     if (el.textContent !== w && document.activeElement !== el) el.textContent = w;
-    fitTape(el);
   });
-}
-
-/** A long word is written smaller rather than running off the end of the strip. */
-function fitTape(el: HTMLElement) {
-  el.style.fontSize = "";
-  let size = parseFloat(getComputedStyle(el).fontSize);
-  while (el.scrollWidth > el.clientWidth && size > 13) {
-    size -= 1;
-    el.style.fontSize = `${size}px`;
-  }
 }
 
 /** Drop the empties and redraw. */
@@ -1082,13 +1078,39 @@ function settleTape() {
   renderTape();
 }
 
-/** ⇧Tab: write on a fresh bit of tape, or the first blank one; at five, the last one. */
+/**
+ * ⇧Tab: with words highlighted in the sentence, tape those and stay put; otherwise
+ * write on a fresh bit of tape, or the first blank one. At five, the last one.
+ */
 function addTape() {
   if (getComputedStyle(tapeEl).display === "none") return; // no margin for it at this width
   const kind = activeKind();
-  if (kind === "sentence") tapeReturn = selectionOffsets(document.activeElement as HTMLElement);
   if (doc.tapeHidden) delete doc.tapeHidden;
   const words = (doc.tape ??= []);
+
+  if (kind === "sentence") {
+    const sel = selectionOffsets(document.activeElement as HTMLElement);
+    tapeReturn = sel;
+    const phrase = cleanWord(sel.text.slice(sel.start, sel.end)).trim();
+    if (phrase) {
+      let i = words.findIndex((w) => !w);
+      if (i < 0 && words.length < TAPE_MAX) i = words.push("") - 1;
+      if (i < 0) {
+        shakeTape(tapeEl.lastElementChild as HTMLElement); // full
+        return;
+      }
+      words[i] = phrase;
+      markDirty();
+      renderTape();
+      const strip = tapeEl.children[i] as HTMLElement;
+      strip.classList.remove("is-new");
+      void strip.offsetWidth;
+      strip.classList.add("is-new");
+      if (overLimit(sel.text.slice(sel.start, sel.end))) shakeTape(strip);
+      return; // the highlight stays where it is
+    }
+  }
+
   let i = words.findIndex((w) => !w);
   if (i < 0) {
     if (words.length < TAPE_MAX) words.push("");
@@ -1145,7 +1167,6 @@ function tapeKeydown(e: KeyboardEvent) {
       return;
     case "Enter":
     case "Escape":
-    case " ":
       e.preventDefault();
       finishTape();
       return;
@@ -1385,7 +1406,7 @@ function editorCommands(): Command[] {
     { id: "note", icon: SquareText, label: focusRev.note ? "Edit note" : "Add a note", key: "Tab", keywords: "margin comment", run: () => focusNote() },
     ...(getComputedStyle(tapeEl).display === "none"
       ? []
-      : [{ id: "tape", icon: StickyNote, label: "Tape a word to the margin", key: "⇧Tab", keywords: "sticky keep word left", run: () => addTape() }]),
+      : [{ id: "tape", icon: StickyNote, label: "Tape to the margin", key: "⇧Tab", keywords: "sticky keep word words highlight left", run: () => addTape() }]),
     ...(tape().some(Boolean) && getComputedStyle(tapeEl).display !== "none"
       ? [{ id: "tapetoggle", icon: doc.tapeHidden ? Eye : EyeOff, label: doc.tapeHidden ? "Show the tape" : "Hide the tape", key: "⌘⇧L", keywords: "sticky words toggle", run: () => toggleTape() }]
       : []),

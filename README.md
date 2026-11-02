@@ -24,7 +24,7 @@ The app opens on **Drafts**, a dashboard of every draft as a shrunken editor til
 | `⌥ ←` `⌥ →` | Hop the highlight a word at a time; typing replaces the highlighted word, releasing ⌥ gives you ordinary arrows again | |
 | `⌃⌥ ←` `⌃⌥ →` | Jump the highlight to the first / last word | |
 | `Tab` | Across to the note margin, and back to the sentence | Edit the note on the browsed line |
-| `⇧Tab` | Tape a word to the left margin (`⇧Tab` again on the tape adds another, up to five; `↵`, space or `Esc` comes back; `⌫` on a blank strip peels it off) | Same |
+| `⇧Tab` | Tape the highlighted words to the left margin, or open a blank strip to write on (`⇧Tab` again on the tape adds another, up to five; `↵` or `Esc` comes back; `⌫` on a blank strip peels it off) | Same |
 | `⌘⇧L` | Hide or show the tape | Same |
 | `⌘B` | Bank / unbank the live line | Bank / unbank (bare `B` also works) |
 | `⌘⇧B` | View banked | View banked |
@@ -34,7 +34,7 @@ The app opens on **Drafts**, a dashboard of every draft as a shrunken editor til
 | `Esc` | Leave the note | Back to the latest line; in banked-only, back to all revisions |
 | `⇧↵` | Soft line break inside the sentence | |
 
-**Tape** is for words you want to keep in sight while you revise: `⇧Tab` sticks a strip of sticky-note yellow to the left of the sentence and you write one word on it in the marker pen (hyphens allowed, twenty letters at most). Up to five strips, staggered and slightly askew, and they stay level with the live line as the draft grows. `⌘⇧L`, the "on tape" count in the top bar, or the command bar hides and shows them; the words are kept with the draft either way. The tape needs a real left margin and a keyboard, so it only appears at desktop widths.
+**Tape** is for words you want to keep in sight while you revise. Hop the highlight onto a word or two and `⇧Tab` tapes them to the left of the sentence on a strip of sticky-note yellow, in the marker pen, without moving the caret; with nothing highlighted `⇧Tab` opens a blank strip to write on. A strip holds twenty-four characters and shakes rather than take a twenty-fifth. Up to five strips, staggered and slightly askew, and they stay level with the live line as the draft grows. `⌘⇧L`, the "on tape" count in the top bar, or the command bar hides and shows them; the words are kept with the draft either way. The tape needs a real left margin and a keyboard, so it only appears at desktop widths.
 
 Bank and note are independent: a line can have either, both, or neither. Banked lines are never struck through, and in the timeline rail a banked tick shows its sentence (two lines, 150px) instead of its number, so the rail doubles as a list of keepers.
 
