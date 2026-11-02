@@ -1011,11 +1011,11 @@ body {
   --ring: var(--link);
 }
 
-/* selected: the hairline darkens to 30% ink and a soft 5px halo at 10% sits flush against it (Paper, Tile) */
+/* selected: a hairline at 30% link blue and a solid 5px ring of it flush against it (Paper, Tile) */
 .tile:hover .mini,
 .tile.is-selected .mini {
   border-color: color-mix(in srgb, var(--ring) 30%, transparent);
-  outline: 5px solid color-mix(in srgb, var(--ring) 10%, transparent);
+  outline: 5px solid var(--ring);
   outline-offset: 0;
 }
 
