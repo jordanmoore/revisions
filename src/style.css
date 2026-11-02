@@ -9,6 +9,7 @@
   --ink: #d9281e; /* red biro: strikes, bank underline, rail */
   --ballpoint: #1d3fd6; /* blue biro: margin notes */
   --highlighter: #fff04a;
+  --tape: #f7e45c; /* sticky-note yellow, for the words taped to the left margin */
 
   --rail-left: 48px;
   --col: 800px;
@@ -546,6 +547,81 @@ body {
   display: none;
 }
 
+/* ---- tape: up to five words stuck to the left margin, staggered, following the live line ---- */
+
+.tape {
+  position: absolute;
+  right: calc(50% + var(--col) / 2 + 48px); /* clear of the faint revision number */
+  width: 180px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+  z-index: 4;
+  cursor: default;
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+
+.tape.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-10px, -50%);
+}
+
+.tape-note {
+  --tilt: 0deg;
+  --shift: 0px;
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 28px;
+  color: #141414;
+  caret-color: #141414;
+  background: var(--tape);
+  padding: 5px 18px 6px;
+  min-width: 64px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  outline: none;
+  cursor: text;
+  opacity: 0.96;
+  transform: translateX(var(--shift)) rotate(var(--tilt));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.16);
+  /* torn ends, so a strip reads as tape rather than a button */
+  clip-path: polygon(
+    3px 0, 100% 0, calc(100% - 2px) 16%, 100% 32%, calc(100% - 3px) 50%, 100% 66%, calc(100% - 2px) 84%, 100% 100%,
+    2px 100%, 0 84%, 3px 66%, 0 50%, 2px 32%, 0 16%
+  );
+  transition: transform 0.25s var(--ease), opacity 0.25s;
+}
+
+.tape-note:focus {
+  opacity: 1;
+  transform: translateX(var(--shift)) rotate(0deg) scale(1.04);
+}
+
+.tape-note:empty::before {
+  content: "word";
+  color: rgb(20 20 20 / 0.35);
+  pointer-events: none;
+}
+
+.counter .tape-count {
+  cursor: pointer;
+}
+
+.counter .tape-count.is-off {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+#app[data-theme="dark"] .tape-note {
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.5);
+}
+
 /* words that differ from the previous revision, written in the blue pen (CSS Highlight API) */
 .sentence::highlight(revised) {
   color: var(--ballpoint);
@@ -607,6 +683,11 @@ body {
   .note-slot {
     width: var(--col);
     padding-top: 0;
+  }
+
+  .tape {
+    right: calc(50% + var(--col) / 2 + 40px);
+    width: 140px;
   }
 
   .restore-hint {
@@ -689,6 +770,10 @@ body {
   }
 
   .tick .num {
+    display: none;
+  }
+
+  .tape {
     display: none;
   }
 }

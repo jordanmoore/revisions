@@ -1,7 +1,8 @@
 // Drafts live in localStorage as one list. Earlier builds stored a single doc; that gets migrated.
 
 export type Rev = { id: string; text: string; banked: boolean; note: string; createdAt: number };
-export type Doc = { id: string; title: string; revs: Rev[]; createdAt: number; updatedAt: number; dark?: boolean; groupId?: string };
+/** `tape` is up to five single words stuck to the left margin of the editor; `tapeHidden` folds them away without losing them. */
+export type Doc = { id: string; title: string; revs: Rev[]; createdAt: number; updatedAt: number; dark?: boolean; groupId?: string; tape?: string[]; tapeHidden?: boolean };
 export type Group = { id: string; name: string; createdAt: number };
 type Store = { docs: Doc[]; groups?: Group[] };
 

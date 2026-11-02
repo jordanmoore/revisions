@@ -7,6 +7,8 @@ import {
   ArrowUp,
   Circle,
   CircleDashed,
+  Eye,
+  EyeOff,
   CircleDot,
   CirclePile,
   CornerDownRight,
@@ -18,6 +20,7 @@ import {
   Moon,
   Plus,
   SquareText,
+  StickyNote,
   Sun,
   TextCursorInput,
   Trash,
@@ -76,6 +79,8 @@ let titleEl: HTMLElement;
 let revLabelEl: HTMLElement;
 let bankedCountEl: HTMLElement;
 let statusEl: HTMLElement;
+let tapeCountEl: HTMLElement;
+let tapeEl: HTMLElement;
 
 type RowEls = {
   row: HTMLElement;
@@ -111,6 +116,7 @@ function mountEditor(d: Doc) {
       <div class="counter">
         <span class="rev-label"></span>
         <span class="banked-count" title="Show banked only (⌘⇧B)"></span>
+        <span class="tape-count" title="Show or hide the tape (⌘⇧L)"></span>
         <span class="status"></span>
         <button type="button" class="theme-toggle" title="Dark or light, for this draft only (⌘⇧D)"></button>
       </div>
@@ -118,6 +124,7 @@ function mountEditor(d: Doc) {
     <main class="stage">
       <div class="rail"><div class="rail-line"></div><div class="rail-dots"></div></div>
       <div class="stream"></div>
+      <div class="tape" aria-label="Taped words"></div>
     </main>
     <footer class="footer"><div class="hints"></div></footer>
   `;
@@ -130,6 +137,8 @@ function mountEditor(d: Doc) {
   revLabelEl = $(".rev-label");
   bankedCountEl = $(".banked-count");
   statusEl = $(".status");
+  tapeCountEl = $(".tape-count");
+  tapeEl = $(".tape");
 
   // "Untitled" is a placeholder, not text, so a click lands the caret at the start and typing names the draft
   titleEl.textContent = doc.title === "Untitled" ? "" : doc.title;
@@ -140,6 +149,8 @@ function mountEditor(d: Doc) {
     markDirty();
   });
   bankedCountEl.addEventListener("click", () => toggleBankedOnly());
+  tapeCountEl.addEventListener("pointerdown", (e) => e.preventDefault()); // keep the caret where it is
+  tapeCountEl.addEventListener("click", () => toggleTape());
   const themeEl = $(".theme-toggle");
   themeEl.addEventListener("pointerdown", (e) => e.preventDefault()); // keep the caret where it is
   themeEl.addEventListener("click", () => toggleTheme());
@@ -163,6 +174,7 @@ function mountEditor(d: Doc) {
   });
 
   render({ instant: true });
+  renderTape();
   focusLive(live().text ? "start" : "end");
 }
 
@@ -334,11 +346,12 @@ function renderRail() {
   });
 }
 
-function activeKind(): "sentence" | "note" | "chrome" | "none" {
+function activeKind(): "sentence" | "note" | "tape" | "chrome" | "none" {
   const a = document.activeElement as HTMLElement | null;
   if (!a) return "none";
   if (a.classList.contains("sentence")) return "sentence";
   if (a.classList.contains("note")) return "note";
+  if (a.classList.contains("tape-note")) return "tape";
   if (a.closest(".crumbs")) return "chrome";
   return "none";
 }
@@ -353,6 +366,9 @@ function renderChrome() {
   revLabelEl.textContent = mode === "edit" ? `Rev ${pad(total)}` : `Rev ${pad(n)} of ${pad(total)}`;
   bankedCountEl.textContent = mode === "banked" ? "Viewing banked" : `${banked} banked`;
   bankedCountEl.classList.toggle("is-on", mode === "banked");
+  const taped = tape().filter(Boolean).length;
+  tapeCountEl.textContent = taped ? `${taped} on tape` : "";
+  tapeCountEl.classList.toggle("is-off", !!doc.tapeHidden);
   statusEl.textContent =
     mode === "browse"
       ? "Browsing"
@@ -368,7 +384,15 @@ function renderChrome() {
     return;
   }
   let hints: [string, string][];
-  if (mode === "edit" && kind === "note") {
+  if (kind === "tape") {
+    const empty = !(document.activeElement as HTMLElement).textContent;
+    hints = [
+      ["↵", "Done"],
+      ...(tape().length < TAPE_MAX || empty ? [["⇧Tab", "Another word"] as [string, string]] : []),
+      ...(empty ? [["⌫", "Peel it off"] as [string, string]] : []),
+      ["Esc", "Back to sentence"],
+    ];
+  } else if (mode === "edit" && kind === "note") {
     hints = [
       ["↵", "Next revision"],
       ["Tab", "Back to sentence"],
@@ -382,6 +406,7 @@ function renderChrome() {
       ["⌥ ← →", "Hop words"],
       ["⌃⌥ ← →", "First / last word"],
       ["Tab", "Note"],
+      ["⇧Tab", "Tape a word"],
       ["⌘B", focusRev.banked ? "Unbank" : "Bank"],
       ["↑ ↓", "Browse"],
       ["⌘⇧B", "View banked"],
@@ -973,6 +998,172 @@ function caretEdge(el: HTMLElement): { first: boolean; last: boolean } {
   return { first: rect.top < box.top + lh * 0.9, last: rect.bottom > box.bottom - lh * 0.9 };
 }
 
+// ---------- tape: up to five words stuck to the left margin ----------
+// A word you want to keep in sight while you revise. ⇧Tab from the sentence sticks
+// a fresh bit of tape on; ⇧Tab again from the tape adds another. One word each,
+// hyphens allowed, and they follow the live line down the page.
+
+const TAPE_MAX = 5;
+const TAPE_CHARS = 20;
+const TILTS = [-2.4, 1.6, -1.2, 2.2, -1.8];
+const SHIFTS = [0, -12, -4, -16, -8];
+let tapeReturn: { start: number; end: number } | null = null;
+
+const tape = () => doc.tape ?? [];
+/** One word only: letters, digits, apostrophes and hyphens, capped so it fits on the tape. */
+const cleanWord = (s: string) => Array.from(s.replace(/[^\p{L}\p{N}'’-]/gu, "")).slice(0, TAPE_CHARS).join("");
+
+function makeTape(): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "tape-note";
+  el.contentEditable = "plaintext-only";
+  el.spellcheck = false;
+  el.addEventListener("input", () => {
+    if (!el.isConnected) return;
+    const raw = el.textContent ?? "";
+    // a space (typed, dictated or pasted) ends the word: one per strip
+    const broke = /\s/.test(raw);
+    const clean = cleanWord(broke ? raw.split(/\s/)[0] : raw);
+    if (clean !== raw) {
+      el.textContent = clean;
+      placeCaretAtEnd(el);
+    }
+    fitTape(el);
+    tape()[Number(el.dataset.i)] = clean;
+    markDirty();
+    if (broke) finishTape();
+  });
+  el.addEventListener("focus", () => renderChrome());
+  el.addEventListener("blur", () => {
+    // a bit of tape with nothing written on it comes straight off
+    if (!el.textContent) window.setTimeout(settleTape, 0);
+    renderChrome();
+  });
+  return el;
+}
+
+function renderTape() {
+  const words = tape();
+  tapeEl.classList.toggle("is-hidden", !!doc.tapeHidden || !words.length);
+  while (tapeEl.children.length > words.length) tapeEl.lastElementChild!.remove();
+  words.forEach((w, i) => {
+    let el = tapeEl.children[i] as HTMLElement | undefined;
+    if (!el) {
+      el = makeTape();
+      tapeEl.appendChild(el);
+    }
+    el.dataset.i = String(i);
+    el.style.setProperty("--tilt", `${TILTS[i % TILTS.length]}deg`);
+    el.style.setProperty("--shift", `${SHIFTS[i % SHIFTS.length]}px`);
+    if (el.textContent !== w && document.activeElement !== el) el.textContent = w;
+    fitTape(el);
+  });
+}
+
+/** A long word is written smaller rather than running off the end of the strip. */
+function fitTape(el: HTMLElement) {
+  el.style.fontSize = "";
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth && size > 13) {
+    size -= 1;
+    el.style.fontSize = `${size}px`;
+  }
+}
+
+/** Drop the empties and redraw. */
+function settleTape() {
+  if (view !== "editor") return;
+  const kept = tape().filter(Boolean);
+  if (kept.length !== tape().length) {
+    doc.tape = kept;
+    markDirty();
+  }
+  if (!kept.length) delete doc.tape;
+  renderTape();
+}
+
+/** ⇧Tab: write on a fresh bit of tape, or the first blank one; at five, the last one. */
+function addTape() {
+  const kind = activeKind();
+  if (kind === "sentence") tapeReturn = selectionOffsets(document.activeElement as HTMLElement);
+  if (doc.tapeHidden) delete doc.tapeHidden;
+  const words = (doc.tape ??= []);
+  let i = words.findIndex((w) => !w);
+  if (i < 0) {
+    if (words.length < TAPE_MAX) words.push("");
+    i = words.length - 1;
+  }
+  markDirty();
+  renderTape();
+  placeCaretAtEnd(tapeEl.children[i] as HTMLElement);
+}
+
+/** Back to the sentence, caret where it was. */
+function finishTape() {
+  (document.activeElement as HTMLElement | null)?.blur();
+  settleTape();
+  if (mode === "edit") {
+    const sentence = rows.get(live().id)!.sentence;
+    if (tapeReturn) {
+      sentence.focus();
+      selectRange(sentence, tapeReturn.start, tapeReturn.end);
+    } else focusLive();
+  }
+  tapeReturn = null;
+  renderChrome();
+}
+
+function removeTape(i: number) {
+  tape().splice(i, 1);
+  markDirty();
+  renderTape();
+  const prev = tapeEl.children[i - 1] as HTMLElement | undefined;
+  if (prev) placeCaretAtEnd(prev);
+  else finishTape();
+}
+
+function toggleTape() {
+  if (!tape().some(Boolean)) return;
+  if (doc.tapeHidden) delete doc.tapeHidden;
+  else {
+    if (activeKind() === "tape") finishTape();
+    doc.tapeHidden = true;
+  }
+  markDirty();
+  renderTape();
+}
+
+function tapeKeydown(e: KeyboardEvent) {
+  const el = document.activeElement as HTMLElement;
+  const i = Number(el.dataset.i);
+  switch (e.key) {
+    case "Tab":
+      e.preventDefault();
+      if (e.shiftKey) addTape();
+      else finishTape();
+      return;
+    case "Enter":
+    case "Escape":
+    case " ":
+      e.preventDefault();
+      finishTape();
+      return;
+    case "Backspace":
+      if (!el.textContent) {
+        e.preventDefault();
+        removeTape(i);
+      }
+      return;
+    case "ArrowUp":
+    case "ArrowDown": {
+      e.preventDefault();
+      const next = tapeEl.children[i + (e.key === "ArrowUp" ? -1 : 1)] as HTMLElement | undefined;
+      if (next) placeCaretAtEnd(next);
+      return;
+    }
+  }
+}
+
 // ---------- editor keys ----------
 
 function editorKeydown(e: KeyboardEvent) {
@@ -1011,6 +1202,15 @@ function editorKeydown(e: KeyboardEvent) {
     toggleTheme();
     return;
   }
+  if (meta && e.shiftKey && (e.key === "l" || e.key === "L")) {
+    e.preventDefault();
+    toggleTape();
+    return;
+  }
+  if (kind === "tape" && !meta && !e.altKey) {
+    tapeKeydown(e);
+    return;
+  }
   // ⌘↑ / ⌘↓ : jump to the very first or the very latest revision
   if (meta && !e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
     e.preventDefault();
@@ -1037,10 +1237,13 @@ function editorKeydown(e: KeyboardEvent) {
     }
     case "Tab": {
       e.preventDefault();
-      if (e.shiftKey || kind === "note") {
+      if (kind === "note") {
+        // either direction leaves the note; the sentence is the only place to go
         if (mode === "edit" && focusId === live().id) focusLive();
         else (document.activeElement as HTMLElement | null)?.blur();
         renderChrome();
+      } else if (e.shiftKey) {
+        addTape();
       } else {
         focusNote();
       }
@@ -1179,6 +1382,10 @@ function editorCommands(): Command[] {
   list.push(
     { id: "bank", icon: CircleDot, label: focusRev.banked ? "Unbank this revision" : "Bank this revision", key: editing ? "⌘B" : "B", keywords: "keep save star", run: () => toggleBank() },
     { id: "note", icon: SquareText, label: focusRev.note ? "Edit note" : "Add a note", key: "Tab", keywords: "margin comment", run: () => focusNote() },
+    { id: "tape", icon: StickyNote, label: "Tape a word to the margin", key: "⇧Tab", keywords: "sticky keep word left", run: () => addTape() },
+    ...(tape().some(Boolean)
+      ? [{ id: "tapetoggle", icon: doc.tapeHidden ? Eye : EyeOff, label: doc.tapeHidden ? "Show the tape" : "Hide the tape", key: "⌘⇧L", keywords: "sticky words toggle", run: () => toggleTape() }]
+      : []),
     { id: "banked", icon: CirclePile, label: mode === "banked" ? "Show all revisions" : "View banked only", key: "⌘⇧B", keywords: "filter hide show", run: () => toggleBankedOnly() },
     { id: "first", icon: ArrowUp, label: "Go to first revision", key: "⌘↑", run: () => browseTo(visibleRevs()[0].id) },
     { id: "last", icon: ArrowDown, label: "Go to latest revision", key: "⌘↓", run: () => goLatest() },
@@ -1221,9 +1428,10 @@ function draftsCommands(): Command[] {
 document.addEventListener("paste", (e) => {
   if (view !== "editor") return;
   const kind = activeKind();
-  if (kind !== "sentence" && kind !== "note" && kind !== "chrome") return;
+  if (kind !== "sentence" && kind !== "note" && kind !== "tape" && kind !== "chrome") return;
   e.preventDefault();
-  const text = (e.clipboardData?.getData("text/plain") ?? "").replace(/\s+/g, " ");
+  let text = (e.clipboardData?.getData("text/plain") ?? "").replace(/\s+/g, " ");
+  if (kind === "tape") text = cleanWord(text);
   document.execCommand("insertText", false, text);
 });
 
