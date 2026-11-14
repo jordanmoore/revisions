@@ -1221,35 +1221,6 @@ body {
 }
 
 
-
-.tile-delete {
-  margin-left: auto;
-  appearance: none;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: var(--faded-2);
-  cursor: pointer;
-  padding: 0;
-  opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
-}
-
-.tile:hover .tile-delete,
-.tile-delete:focus-visible {
-  opacity: 1;
-}
-
-.tile-delete:hover {
-  color: var(--ink);
-}
-
-@media (pointer: coarse) {
-  .tile-delete {
-    opacity: 1;
-  }
-}
-
 .drafts-empty {
   height: 100%;
   display: flex;

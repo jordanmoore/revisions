@@ -1641,7 +1641,6 @@ function tileHtml(d: Doc): string {
         <div class="tile-meta-text">
           <div class="tile-row">
             <span class="tile-title${unnamed(d) ? " is-auto" : ""}">${escapeHtml(displayTitle(d))}</span>
-            <button type="button" class="tile-delete" data-delete="${d.id}" title="Delete draft (⌫)">Delete</button>
           </div>
           <span class="tile-sub">${parts.join(" · ")}</span>
         </div>
@@ -1786,13 +1785,6 @@ function mountDrafts(focusGroupId?: string) {
     if (h) placeCaret(h, "end");
   }
   app.querySelector(".drafts-commands")?.addEventListener("click", openCommands);
-  app.querySelectorAll<HTMLButtonElement>(".tile-delete").forEach((b) => {
-    b.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      deleteDraft(b.dataset.delete!);
-    });
-  });
   // hovering moves the keyboard selection too, so the two never disagree
   app.querySelectorAll<HTMLElement>(".tile").forEach((t, i) => {
     t.addEventListener("mouseenter", () => selectTile(i));
