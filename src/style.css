@@ -926,6 +926,18 @@ body {
   color: var(--done);
 }
 
+/* a count with its mark before it, the same icons the command bar uses, in the text's own grey */
+.counter .with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.counter .with-icon svg {
+  display: block;
+  flex-shrink: 0;
+}
+
 /* ---- the log: one wrapping line of sentences per draft ---- */
 
 .log {

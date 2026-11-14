@@ -2,6 +2,7 @@ import "./style.css";
 import { type Doc, type Group, type Rev, addDoc, addGroup, ago, getDoc, getGroup, groups, loadStore, newDoc, newRev, removeDoc, removeGroup, saveStore } from "./store";
 import { type Command, closePalette, isPaletteOpen, openPalette } from "./palette";
 import {
+  type IconNode,
   createElement,
   ArrowDown,
   ArrowUp,
@@ -1656,6 +1657,9 @@ function tileHtml(d: Doc): string {
 
 let finalOnly = false;
 
+/** A small grey icon for the counts in the top bar, the same marks the command bar uses. */
+const countIcon = (icon: IconNode) => createElement(icon, { width: 14, height: 14, "stroke-width": 1.75 }).outerHTML;
+
 /** The toggle on a tile: a dashed circle for a draft, a filled green check for a final one. */
 function finalButtonHtml(d: Doc): string {
   const icon = createElement(d.final ? CircleCheck : CircleDashed, { width: 22, height: 22, "stroke-width": 1.75 }).outerHTML;
@@ -1718,9 +1722,9 @@ function mountDrafts(focusGroupId?: string) {
     <header class="topbar">
       <div class="crumbs"><span class="project"><img class="mark" src="${MARK}" alt="" />Revisions</span></div>
       <div class="counter">
-        <span>${all.length} ${all.length === 1 ? "draft" : "drafts"}</span>
-        ${finals ? `<button type="button" class="counter-toggle final-filter${finalOnly ? " is-on" : ""}" title="${finalOnly ? "Show every draft" : "Show only final drafts"}">${finalOnly ? "Viewing final" : `${finals} final`}</button>` : ""}
-        <a class="counter-link" href="#/log" title="Every revision, across every draft">${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</a>
+        <span class="with-icon">${countIcon(CircleDashed)}${all.length} ${all.length === 1 ? "draft" : "drafts"}</span>
+        ${finals ? `<button type="button" class="counter-toggle with-icon final-filter${finalOnly ? " is-on" : ""}" title="${finalOnly ? "Show every draft" : "Show only final drafts"}">${countIcon(CircleCheck)}${finalOnly ? "Viewing final" : `${finals} final`}</button>` : ""}
+        <a class="counter-link with-icon" href="#/log" title="Every revision, across every draft">${countIcon(LineStyle)}${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</a>
         <button type="button" class="theme-toggle"></button>
         <button type="button" class="act new-group">New group${touch ? "" : "<kbd>G</kbd>"}</button>
         <button type="button" class="act -primary new-draft">New draft${touch ? "" : "<kbd>N</kbd>"}</button>
@@ -1992,8 +1996,8 @@ function mountLog() {
     <header class="topbar">
       <div class="crumbs"><a class="home" href="#/"><img class="mark" src="${MARK}" alt="" />Revisions</a><span>/</span><span class="group-crumb">Every revision</span></div>
       <div class="counter">
-        <a class="counter-link" href="#/">${n} ${n === 1 ? "draft" : "drafts"}</a>
-        <span>${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</span>
+        <a class="counter-link with-icon" href="#/">${countIcon(CircleDashed)}${n} ${n === 1 ? "draft" : "drafts"}</a>
+        <span class="with-icon">${countIcon(LineStyle)}${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</span>
         <button type="button" class="theme-toggle"></button>
         <button type="button" class="act -primary new-draft">New draft${touch ? "" : "<kbd>N</kbd>"}</button>
       </div>
