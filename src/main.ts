@@ -142,12 +142,12 @@ function mountEditor(d: Doc) {
   tapeCountEl = $(".tape-count");
   tapeEl = $(".tape");
 
-  // "Untitled" is a placeholder, not text, so a click lands the caret at the start and typing names the draft
-  titleEl.textContent = doc.title === "Untitled" ? "" : doc.title;
-  setPageTitle(doc.title);
+  // an unnamed draft shows its opening words as a placeholder, not text, so a click lands the caret at the start and typing names it
+  titleEl.textContent = unnamed(doc) ? "" : doc.title;
+  setPageTitle(displayTitle(doc));
   titleEl.addEventListener("input", () => {
     doc.title = titleEl.textContent?.trim() || "Untitled";
-    setPageTitle(doc.title);
+    setPageTitle(displayTitle(doc));
     markDirty();
   });
   bankedCountEl.addEventListener("click", () => toggleBankedOnly());
@@ -361,6 +361,11 @@ function activeKind(): "sentence" | "note" | "tape" | "chrome" | "none" {
 
 function renderChrome() {
   if (view !== "editor") return;
+  if (unnamed(doc)) {
+    // the provisional name follows the first sentence as it is typed
+    titleEl.dataset.placeholder = autoTitle(doc) || "Untitled";
+    setPageTitle(displayTitle(doc));
+  }
   const total = doc.revs.length;
   const n = revIndex(focusId) + 1;
   const banked = doc.revs.filter((r) => r.banked).length;
@@ -1414,6 +1419,29 @@ function openCommands() {
   openPalette(commands, { placeholder: view === "editor" ? "Type a command…" : "Type a command or a draft name…", restore });
 }
 
+/** A draft that has not been given a name yet. */
+const unnamed = (d: Doc) => !d.title || d.title === "Untitled";
+
+/**
+ * A name for a draft nobody has named: the opening words of the first sentence
+ * written, up to five and about a line of the crumb, so the dashboard is not a
+ * wall of Untitleds. It is never stored; naming the draft replaces it.
+ */
+function autoTitle(d: Doc): string {
+  const first = d.revs.find((r) => r.text.trim());
+  if (!first) return "";
+  let out = "";
+  for (const w of first.text.trim().split(/\s+/)) {
+    if (out && `${out} ${w}`.length > 28) break;
+    out = out ? `${out} ${w}` : w;
+    if (out.split(" ").length >= 5) break;
+  }
+  return out.replace(/[\s\p{P}]+$/u, "");
+}
+
+/** What a draft is called: its own name, or its opening words until it has one. */
+const displayTitle = (d: Doc) => (unnamed(d) ? autoTitle(d) || "Untitled" : d.title);
+
 /** The opening words of a draft, so two "Untitled"s can be told apart. */
 function draftNote(d: Doc): string {
   const { latest } = lastThree(d);
@@ -1428,12 +1456,12 @@ function otherDrafts(exceptId?: string): Command[] {
     .map((d) => ({
       id: `open:${d.id}`,
       icon: CornerDownRight,
-      label: `Open ${d.title || "Untitled"}`,
+      label: `Open ${displayTitle(d)}`,
       note: draftNote(d),
       run: () => {
         location.hash = `#/d/${d.id}`;
       },
-      crumb: d.title || "Untitled",
+      crumb: displayTitle(d),
       children: () => draftActions(d),
     }));
 }
@@ -1443,10 +1471,10 @@ function otherDrafts(exceptId?: string): Command[] {
  * its row: open, rename in place, move between groups, delete.
  */
 function draftActions(d: Doc): Command[] {
-  const name = d.title || "Untitled";
+  const name = displayTitle(d);
   return [
     { id: "open", icon: CornerDownRight, label: "Open", note: draftNote(d), key: "↵", run: () => { location.hash = `#/d/${d.id}`; } },
-    { id: "rename", icon: TextCursorInput, label: "Rename", keywords: "title name", prompt: { placeholder: "Untitled", value: d.title, submit: (t) => renameDraft(d, t) } },
+    { id: "rename", icon: TextCursorInput, label: "Rename", keywords: "title name", prompt: { placeholder: autoTitle(d) || "Untitled", value: unnamed(d) ? "" : d.title, submit: (t) => renameDraft(d, t) } },
     ...groupCommands(d),
     { id: "delete", icon: Trash, label: `Delete ${name}`, danger: true, keywords: "remove", run: () => deleteDraft(d.id, view === "editor" && doc.id === d.id) },
   ];
@@ -1506,17 +1534,17 @@ function draftsCommands(): Command[] {
   const selected = selectedId ? getDoc(selectedId) : undefined;
   const list: Command[] = [{ id: "newdraft", icon: Plus, label: "New draft", key: "N", keywords: "create file", run: () => createDraft() }];
   if (selected) {
-    list.push({ id: "open", icon: CornerDownRight, label: `Open ${selected.title || "Untitled"}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; }, crumb: selected.title || "Untitled", children: () => draftActions(selected) });
+    list.push({ id: "open", icon: CornerDownRight, label: `Open ${displayTitle(selected)}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; }, crumb: displayTitle(selected), children: () => draftActions(selected) });
   }
   list.push({ id: "newgroup-top", icon: SquareDashedPlus, label: "New group", key: "G", keywords: "create folder", run: () => createGroup() });
   list.push({ id: "log", icon: LineStyle, label: "Every revision", keywords: "log history all sentences", run: () => { location.hash = "#/log"; } });
-  if (selected) list.push(...groupCommands(selected).map((c) => ({ ...c, label: c.label.replace(/^Move to/, `Move ${selected.title || "Untitled"} to`).replace(/^Remove from/, `Remove ${selected.title || "Untitled"} from`) })));
+  if (selected) list.push(...groupCommands(selected).map((c) => ({ ...c, label: c.label.replace(/^Move to/, `Move ${displayTitle(selected)} to`).replace(/^Remove from/, `Remove ${displayTitle(selected)} from`) })));
   list.push(
     ...otherDrafts(selected?.id),
     { id: "theme", icon: globalDark ? Sun : Moon, label: globalDark ? "Light theme" : "Dark theme", keywords: "theme invert", run: () => toggleGlobalTheme() },
   );
   if (selected) {
-    list.push({ id: "delete", icon: Trash, label: `Delete ${selected.title || "Untitled"}`, note: draftNote(selected), key: "⌫", danger: true, keywords: "remove", run: () => deleteDraft(selected.id) });
+    list.push({ id: "delete", icon: Trash, label: `Delete ${displayTitle(selected)}`, note: draftNote(selected), key: "⌫", danger: true, keywords: "remove", run: () => deleteDraft(selected.id) });
   }
   for (const g of groups()) {
     list.push({ id: `delgroup:${g.id}`, icon: Trash, label: `Delete group ${g.name}`, note: "drafts go back to Recents", danger: true, keywords: "remove folder", run: () => { if (window.confirm(`Delete the group “${g.name}”? Its drafts move back to Recents.`)) { removeGroup(g.id); mountDrafts(); } } });
@@ -1590,7 +1618,7 @@ function tileHtml(d: Doc): string {
       </div>
       <div class="tile-meta">
         <div class="tile-row">
-          <span class="tile-title">${escapeHtml(d.title || "Untitled")}</span>
+          <span class="tile-title${unnamed(d) ? " is-auto" : ""}">${escapeHtml(displayTitle(d))}</span>
           <button type="button" class="tile-delete" data-delete="${d.id}" title="Delete draft (⌫)">Delete</button>
         </div>
         <span class="tile-sub">${parts.join(" · ")}</span>
@@ -1864,7 +1892,7 @@ function mountLog() {
       if (banked) parts.push(`${banked} banked`);
       parts.push(ago(d.updatedAt));
       return `<section class="log-entry${d.asTyped ? " as-typed" : ""}">
-        <a class="log-meta" href="#/d/${d.id}"><span class="log-title">${escapeHtml(d.title || "Untitled")}</span><span class="log-sub">${parts.join(" · ")}</span></a>
+        <a class="log-meta" href="#/d/${d.id}"><span class="log-title${unnamed(d) ? " is-auto" : ""}">${escapeHtml(displayTitle(d))}</span><span class="log-sub">${parts.join(" · ")}</span></a>
         <p class="log-row">${revs}</p>
       </section>`;
     })

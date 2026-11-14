@@ -13,6 +13,8 @@ npm run dev
 
 Then open http://localhost:5173. Everything is saved to `localStorage` in the browser; there is no server.
 
+A draft nobody has named wears the opening words of its first sentence as a provisional name, faded, in the crumb, on its tile, in Every revision and in the command bar; click the crumb (or Rename) and type to give it a real one. The crumb is set like the timeline, in Futura Condensed Medium capitals.
+
 The app opens on **Drafts**, a dashboard of every draft as a shrunken editor tile: the latest sentence centred, the one before it faded and struck through, a mini rail of dashes down the side. Arrow keys move between tiles, Return opens the selected one, Backspace deletes it (after a confirm), `N` starts a new draft; the mouse works too. Inside the editor the "Revisions" crumb goes back, as does `Esc` once there is nothing else to escape from.
 
 ## Keys
