@@ -11,6 +11,7 @@
   --highlighter: #fff04a;
   --tape: #f7e45c; /* sticky-note yellow, for the words taped to the left margin */
   --link: #0074d9; /* Possible Forms' link blue: the selected tile on the Drafts page */
+  --done: #1a9a4a; /* green pen: a draft marked final */
 
   --rail-left: 48px;
   --col: 800px;
@@ -39,6 +40,7 @@
   --rule: #333331;
   --ink: #ff4a3d;
   --ballpoint: #5b78ff;
+  --done: #3ac06c;
   --paper-0: rgb(20 20 20 / 0);
 }
 
@@ -905,6 +907,25 @@ body {
   color: var(--toner);
 }
 
+/* the "N final" count is a toggle, like "N banked" in the editor: green while the dashboard shows only finals */
+.counter-toggle {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--faded);
+  cursor: pointer;
+}
+
+.counter-toggle:hover {
+  color: var(--toner);
+}
+
+.counter-toggle.is-on {
+  color: var(--done);
+}
+
 /* ---- the log: one wrapping line of sentences per draft ---- */
 
 .log {
@@ -1112,12 +1133,58 @@ body {
 
 .tile-meta {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 12px;
   padding: 12px 2px 0;
   font-size: 13px;
   line-height: 18px;
   color: var(--faded);
+}
+
+.tile-meta-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* draft or final: a dashed circle, or a filled green check, centred against the two lines of meta */
+.tile-final {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faded-2);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tile-final svg {
+  display: block;
+}
+
+.tile-final:hover {
+  color: var(--faded);
+}
+
+.tile-final.is-final {
+  color: var(--done);
+}
+
+.tile-final.is-final svg {
+  fill: var(--done);
+}
+
+.tile-final.is-final svg path {
+  fill: none;
+  stroke: var(--paper);
 }
 
 .tile-row {

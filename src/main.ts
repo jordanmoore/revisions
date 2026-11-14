@@ -8,6 +8,7 @@ import {
   CaseSensitive,
   CaseUpper,
   Circle,
+  CircleCheck,
   CircleDashed,
   Eye,
   EyeOff,
@@ -1476,9 +1477,18 @@ function draftActions(d: Doc): Command[] {
   return [
     { id: "open", icon: CornerDownRight, label: "Open", note: draftNote(d), key: "↵", run: () => { location.hash = `#/d/${d.id}`; } },
     { id: "rename", icon: TextCursorInput, label: "Rename", keywords: "title name", prompt: { placeholder: autoTitle(d) || "Untitled", value: unnamed(d) ? "" : d.title, submit: (t) => renameDraft(d, t) } },
+    finalCommand(d),
     ...groupCommands(d),
     { id: "delete", icon: Trash, label: `Delete ${name}`, danger: true, keywords: "remove", run: () => deleteDraft(d.id, view === "editor" && doc.id === d.id) },
   ];
+}
+
+/** Mark a draft final, or back to a draft. */
+function finalCommand(d: Doc, name = ""): Command {
+  const what = name ? ` ${name}` : "";
+  return d.final
+    ? { id: "unfinal", icon: CircleDashed, label: `Mark${what} as a draft`, keywords: "final done keeper unmark", run: () => toggleFinal(d) }
+    : { id: "final", icon: CircleCheck, label: `Mark${what} as final`, keywords: "done keeper finished", run: () => toggleFinal(d) };
 }
 
 function renameDraft(d: Doc, title: string) {
@@ -1518,6 +1528,7 @@ function editorCommands(): Command[] {
     { id: "last", icon: ArrowDown, label: "Go to latest revision", key: "⌘↓", run: () => goLatest() },
     { id: "theme", icon: dark ? Sun : Moon, label: dark ? "Light theme" : "Dark theme", key: "⌘⇧D", keywords: "theme invert", run: () => toggleTheme() },
     { id: "case", icon: doc.asTyped ? CaseUpper : CaseSensitive, label: doc.asTyped ? "Uppercase" : "Original case", key: "⌘⇧U", keywords: "case capitals caps lowercase typed", run: () => toggleCase() },
+    finalCommand(doc),
     { id: "rename", icon: TextCursorInput, label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
     { id: "newdraft", icon: Plus, label: "New draft", keywords: "create file", run: () => createDraft() },
     { id: "home", icon: LayoutGrid, label: "Go to dashboard", key: "Esc", keywords: "drafts home back", run: () => { save(); location.hash = "#/"; } },
@@ -1536,6 +1547,14 @@ function draftsCommands(): Command[] {
   const list: Command[] = [{ id: "newdraft", icon: Plus, label: "New draft", key: "N", keywords: "create file", run: () => createDraft() }];
   if (selected) {
     list.push({ id: "open", icon: CornerDownRight, label: `Open ${displayTitle(selected)}`, note: draftNote(selected), key: "↵", run: () => { location.hash = `#/d/${selected.id}`; }, crumb: displayTitle(selected), children: () => draftActions(selected) });
+  }
+  if (selected) list.push({ ...finalCommand(selected, displayTitle(selected)), key: "F" });
+  if (loadStore().docs.some((d) => d.final)) {
+    list.push(
+      finalOnly
+        ? { id: "allDrafts", icon: LayoutGrid, label: "Show every draft", keywords: "final filter all", run: () => toggleFinalOnly() }
+        : { id: "finalOnly", icon: CircleCheck, label: "Show only final drafts", keywords: "final filter done keepers", run: () => toggleFinalOnly() },
+    );
   }
   list.push({ id: "newgroup-top", icon: SquareDashedPlus, label: "New group", key: "G", keywords: "create folder", run: () => createGroup() });
   list.push({ id: "log", icon: LineStyle, label: "Every revision", keywords: "log history all sentences", run: () => { location.hash = "#/log"; } });
@@ -1618,13 +1637,49 @@ function tileHtml(d: Doc): string {
         <div class="mini-stream">${prevLine(older, "is-older")}${prevLine(prev, "")}${latestHtml}</div>
       </div>
       <div class="tile-meta">
-        <div class="tile-row">
-          <span class="tile-title${unnamed(d) ? " is-auto" : ""}">${escapeHtml(displayTitle(d))}</span>
-          <button type="button" class="tile-delete" data-delete="${d.id}" title="Delete draft (⌫)">Delete</button>
+        <div class="tile-meta-text">
+          <div class="tile-row">
+            <span class="tile-title${unnamed(d) ? " is-auto" : ""}">${escapeHtml(displayTitle(d))}</span>
+            <button type="button" class="tile-delete" data-delete="${d.id}" title="Delete draft (⌫)">Delete</button>
+          </div>
+          <span class="tile-sub">${parts.join(" · ")}</span>
         </div>
-        <span class="tile-sub">${parts.join(" · ")}</span>
+        ${finalButtonHtml(d)}
       </div>
     </a>`;
+}
+
+// ---------- final ----------
+// A draft you landed on, as against a scrap. A dashed circle on the tile says draft;
+// a filled green check says final. Click, F, or the command bar flips it, and the
+// "final" count in the top bar filters the dashboard down to the keepers.
+
+let finalOnly = false;
+
+/** The toggle on a tile: a dashed circle for a draft, a filled green check for a final one. */
+function finalButtonHtml(d: Doc): string {
+  const icon = createElement(d.final ? CircleCheck : CircleDashed, { width: 16, height: 16, "stroke-width": 1.75 }).outerHTML;
+  const title = d.final ? "Final. Click to mark as a draft (F)" : "Draft. Click to mark as final (F)";
+  return `<button type="button" class="tile-final${d.final ? " is-final" : ""}" data-final="${d.id}" title="${title}" aria-pressed="${d.final ? "true" : "false"}" aria-label="${d.final ? "Final" : "Draft"}">${icon}</button>`;
+}
+
+function toggleFinal(d: Doc) {
+  if (d.final) delete d.final;
+  else d.final = true;
+  saveStore();
+  if (view === "drafts") {
+    // redraw for the count in the top bar, keeping the selection and the scroll where they were
+    const scroller = app.querySelector<HTMLElement>(".drafts");
+    const top = scroller?.scrollTop ?? 0;
+    mountDrafts();
+    const next = app.querySelector<HTMLElement>(".drafts");
+    if (next) next.scrollTop = top;
+  }
+}
+
+function toggleFinalOnly() {
+  finalOnly = !finalOnly;
+  mountDrafts();
 }
 
 /** One section of the dashboard: a heading and its tiles (or a quiet line when a group is empty). */
@@ -1648,15 +1703,23 @@ function mountDrafts(focusGroupId?: string) {
   setPageTitle();
   app.dataset.theme = globalDark ? "dark" : "light";
   delete app.dataset.case; // each tile carries its own draft's case
-  const docs = [...loadStore().docs].sort((a, b) => b.updatedAt - a.updatedAt);
+  const all = [...loadStore().docs].sort((a, b) => b.updatedAt - a.updatedAt);
+  const finals = all.filter((d) => d.final).length;
+  if (!finals) finalOnly = false;
+  const docs = finalOnly ? all.filter((d) => d.final) : all;
   const gs = groups();
   const recents = docs.filter((d) => !getGroup(d.groupId));
-  const sections = [sectionHtml(null, recents), ...gs.map((g) => sectionHtml(g, docs.filter((d) => d.groupId === g.id)))];
+  // filtering to final: only the sections that have one
+  const sections = [
+    ...(finalOnly && !recents.length ? [] : [sectionHtml(null, recents)]),
+    ...gs.filter((g) => !finalOnly || docs.some((d) => d.groupId === g.id)).map((g) => sectionHtml(g, docs.filter((d) => d.groupId === g.id))),
+  ];
   app.innerHTML = `
     <header class="topbar">
       <div class="crumbs"><span class="project"><img class="mark" src="${MARK}" alt="" />Revisions</span></div>
       <div class="counter">
-        <span>${docs.length} ${docs.length === 1 ? "draft" : "drafts"}</span>
+        <span>${all.length} ${all.length === 1 ? "draft" : "drafts"}</span>
+        ${finals ? `<button type="button" class="counter-toggle final-filter${finalOnly ? " is-on" : ""}" title="${finalOnly ? "Show every draft" : "Show only final drafts"}">${finalOnly ? "Viewing final" : `${finals} final`}</button>` : ""}
         <a class="counter-link" href="#/log" title="Every revision, across every draft">${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</a>
         <button type="button" class="theme-toggle"></button>
         <button type="button" class="act new-group">New group${touch ? "" : "<kbd>G</kbd>"}</button>
@@ -1665,17 +1728,26 @@ function mountDrafts(focusGroupId?: string) {
     </header>
     <main class="drafts">
       ${
-        docs.length || gs.length
+        docs.length || (gs.length && !finalOnly)
           ? sections.join("")
           : `<div class="drafts-empty"><div class="mini-live is-empty">Write.</div><p>Nothing here yet. Start a draft and rewrite one sentence until it sings.</p></div>`
       }
     </main>
     <footer class="footer"><div class="hints">${
-      touch ? `<button type="button" class="act drafts-commands">Commands</button>` : `<div class="hint"><kbd>← ↑ ↓ →</kbd><span>Choose</span></div><div class="hint"><kbd>↵</kbd><span>Open</span></div><div class="hint"><kbd>⌫</kbd><span>Delete</span></div><div class="hint"><kbd>N</kbd><span>New draft</span></div><div class="hint"><kbd>G</kbd><span>New group</span></div><div class="hint"><kbd>⌘K</kbd><span>Commands</span></div>`
+      touch ? `<button type="button" class="act drafts-commands">Commands</button>` : `<div class="hint"><kbd>← ↑ ↓ →</kbd><span>Choose</span></div><div class="hint"><kbd>↵</kbd><span>Open</span></div><div class="hint"><kbd>F</kbd><span>Final</span></div><div class="hint"><kbd>⌫</kbd><span>Delete</span></div><div class="hint"><kbd>N</kbd><span>New draft</span></div><div class="hint"><kbd>G</kbd><span>New group</span></div><div class="hint"><kbd>⌘K</kbd><span>Commands</span></div>`
     }</div></footer>
   `;
   app.querySelector(".new-draft")!.addEventListener("click", createDraft);
   app.querySelector(".new-group")!.addEventListener("click", () => createGroup());
+  app.querySelector(".final-filter")?.addEventListener("click", toggleFinalOnly);
+  app.querySelectorAll<HTMLButtonElement>(".tile-final").forEach((b) => {
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const d = getDoc(b.dataset.final!);
+      if (d) toggleFinal(d);
+    });
+  });
   app.querySelector(".theme-toggle")!.addEventListener("click", toggleGlobalTheme);
   applyTheme();
   // group headings rename in place: Return or blur saves, Esc puts the old name back
@@ -1840,6 +1912,16 @@ function draftsKeydown(e: KeyboardEvent) {
       e.preventDefault();
       createGroup();
       return;
+    case "f":
+    case "F": {
+      const t = all[draftsFocus];
+      const d = t && getDoc(t.dataset.id!);
+      if (d) {
+        e.preventDefault();
+        toggleFinal(d);
+      }
+      return;
+    }
     case "ArrowRight":
       e.preventDefault();
       selectTile(draftsFocus + 1);

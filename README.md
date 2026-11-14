@@ -45,6 +45,8 @@ Words in the live line that differ from the previous revision are written in the
 
 Drafts can be gathered into **groups**. The dashboard shows Recents (drafts in no group) first, then each group newest first with a big faded heading you can rename in place. `G` or New group makes one (Esc on a group you have not named or put anything in takes it straight back off); the command bar moves a draft into a group, into a new group, or back out, and can delete a group (its drafts return to Recents). The editor crumb shows the draft's group.
 
+**Final.** A draft you landed on, as against a scrap. Each tile carries a dashed circle on the right of its meta line that reads "Draft"; click it, press `F` on the selected tile, or use "Mark as final" in the command bar (on the dashboard, in a draft's own actions, or inside the editor) and it becomes a filled green check. The top bar then shows "N final" beside the draft count; click it (or "Show only final drafts" in the command bar) and the dashboard shows just the finals, with groups that have none folded away, until you click "Viewing final" again.
+
 **Every revision** (`#/log`, or the revision count on the Drafts page, or "Every revision" in the command bar) lays out every sentence from every draft as one flowing record: the draft's name, then each revision in order, faded except the banked ones. Click a sentence to open that draft browsing at that revision.
 
 **Capitals** are the default: every sentence is displayed in uppercase, in the editor, on the Drafts tiles, in the rail and in Every revision, whatever case it was typed in. The words underneath keep their case, so `⌘⇧U` (or "Original case" in the command bar) shows a draft as written, and `⌘⇧U` again puts the capitals back. It is remembered per draft.

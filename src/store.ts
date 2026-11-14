@@ -4,8 +4,9 @@ export type Rev = { id: string; text: string; banked: boolean; note: string; cre
 /**
  * `tape` is up to five single words stuck to the left margin of the editor; `tapeHidden` folds them away without losing them.
  * Sentences are shown in capitals unless `asTyped` is set, which shows the draft in the case it was written.
+ * `final` marks a draft you landed on, as against a scrap; the dashboard can show only those.
  */
-export type Doc = { id: string; title: string; revs: Rev[]; createdAt: number; updatedAt: number; dark?: boolean; groupId?: string; tape?: string[]; tapeHidden?: boolean; asTyped?: boolean };
+export type Doc = { id: string; title: string; revs: Rev[]; createdAt: number; updatedAt: number; dark?: boolean; groupId?: string; tape?: string[]; tapeHidden?: boolean; asTyped?: boolean; final?: boolean };
 export type Group = { id: string; name: string; createdAt: number };
 type Store = { docs: Doc[]; groups?: Group[] };
 
