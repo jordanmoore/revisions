@@ -478,7 +478,7 @@ body {
   font-stretch: 75%;
   font-size: var(--size);
   line-height: var(--line);
-  letter-spacing: -0.016em;
+  letter-spacing: -0.025em;
   text-align: center;
   color: var(--toner);
   white-space: pre-wrap;
@@ -942,7 +942,7 @@ body {
   font-stretch: 75%;
   font-size: 28px;
   line-height: 32px;
-  letter-spacing: -0.016em;
+  letter-spacing: -0.025em;
   color: var(--toner);
 }
 
@@ -1061,7 +1061,7 @@ body {
   font-stretch: 75%;
   font-size: 22px;
   line-height: 26px;
-  letter-spacing: -0.016em;
+  letter-spacing: -0.025em;
   color: var(--toner);
   display: -webkit-box;
   -webkit-box-orient: vertical;
