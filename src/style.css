@@ -149,8 +149,15 @@ body {
   align-items: center;
 }
 
+/* the crumb is set like the timeline: Futura Condensed Medium, 16px, capitals */
 .crumbs {
   gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-stretch: 75%;
+  font-size: 16px;
+  line-height: 20px;
+  text-transform: uppercase;
 }
 
 .crumbs .project {
@@ -182,9 +189,10 @@ body {
   background: color-mix(in srgb, var(--rule) 48%, transparent);
 }
 
+/* an unnamed draft wears its opening words, faded, until you type over them */
 .crumbs .title:empty::before {
   content: attr(data-placeholder);
-  color: var(--faded-2);
+  color: var(--faded);
   pointer-events: none;
 }
 
@@ -1114,6 +1122,11 @@ body {
   display: flex;
   align-items: baseline;
   gap: 12px;
+}
+
+.tile-title.is-auto,
+.log-title.is-auto {
+  color: var(--faded);
 }
 
 .tile-title {
