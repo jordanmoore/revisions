@@ -1658,7 +1658,7 @@ let finalOnly = false;
 
 /** The toggle on a tile: a dashed circle for a draft, a filled green check for a final one. */
 function finalButtonHtml(d: Doc): string {
-  const icon = createElement(d.final ? CircleCheck : CircleDashed, { width: 16, height: 16, "stroke-width": 1.75 }).outerHTML;
+  const icon = createElement(d.final ? CircleCheck : CircleDashed, { width: 22, height: 22, "stroke-width": 1.75 }).outerHTML;
   const title = d.final ? "Final. Click to mark as a draft (F)" : "Draft. Click to mark as final (F)";
   return `<button type="button" class="tile-final${d.final ? " is-final" : ""}" data-final="${d.id}" title="${title}" aria-pressed="${d.final ? "true" : "false"}" aria-label="${d.final ? "Final" : "Draft"}">${icon}</button>`;
 }
