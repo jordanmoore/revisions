@@ -1,3 +1,6 @@
 node_modules
 dist
 .DS_Store
+
+# licensed webfonts (Font Bros order): served by the site, not redistributed through the public repo
+src/fonts/*.woff
