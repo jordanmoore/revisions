@@ -390,11 +390,12 @@ body {
   background: var(--ink);
 }
 
-/* banked: the sentence itself, two lines at most, 150px wide, so the rail doubles as a list of keepers */
+/* banked: the sentence itself, two lines at most, 150px wide, so the rail doubles as a list of keepers;
+   one line of it is exactly a plain tick's 28px, so banking does not hop the rail */
 .tick.is-banked {
   height: auto;
   min-height: 28px;
-  padding: 7px 0;
+  padding: 4px 0;
   align-items: center;
 }
 
