@@ -295,7 +295,8 @@ function render(opts: { instant?: boolean } = {}) {
     }
 
     const d = hidden ? 0 : Math.abs(pos - focusPos);
-    const opacity = d === 0 ? 1 : d === 1 ? 0.5 : d === 2 ? 0.3 : d === 3 ? 0.18 : 0.1;
+    // only the line you are on is at full strength; everything else sits well back
+    const opacity = d === 0 ? 1 : 0.1;
     const blur = d <= 1 ? 0 : d === 2 ? 0.5 : d === 3 ? 1 : 1.5;
     els.row.style.opacity = String(opacity);
     els.row.style.filter = blur ? `blur(${blur}px)` : "none";
