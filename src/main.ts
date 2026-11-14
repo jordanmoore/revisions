@@ -1722,7 +1722,7 @@ function mountDrafts(focusGroupId?: string) {
       <div class="crumbs"><span class="project"><img class="mark" src="${MARK}" alt="" />Revisions</span></div>
       <div class="counter">
         <span class="with-icon">${countIcon(CircleDashed)}${all.length} ${all.length === 1 ? "draft" : "drafts"}</span>
-        ${finals ? `<button type="button" class="counter-toggle with-icon final-filter${finalOnly ? " is-on" : ""}" title="${finalOnly ? "Show every draft" : "Show only final drafts"}">${countIcon(CircleCheck)}${finalOnly ? "Viewing final" : `${finals} final`}</button>` : ""}
+        ${finals ? `<button type="button" class="counter-toggle with-icon final-filter${finalOnly ? " is-on" : ""}" title="${finalOnly ? "Show every draft" : "Show only final drafts"}">${countIcon(CircleCheck)}${finalOnly ? `Viewing ${finals === 1 ? "final" : "finals"}` : `${finals} ${finals === 1 ? "final" : "finals"}`}</button>` : ""}
         <a class="counter-link with-icon" href="#/log" title="Every revision, across every draft">${countIcon(LineStyle)}${revisionCount()} ${revisionCount() === 1 ? "revision" : "revisions"}</a>
         <button type="button" class="theme-toggle"></button>
         <button type="button" class="act new-group">New group${touch ? "" : "<kbd>G</kbd>"}</button>
