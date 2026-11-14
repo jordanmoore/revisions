@@ -1750,7 +1750,14 @@ function selectTile(i: number) {
   if (!all.length) return;
   draftsFocus = Math.max(0, Math.min(i, all.length - 1));
   all.forEach((t, k) => t.classList.toggle("is-selected", k === draftsFocus));
-  all[draftsFocus].scrollIntoView({ block: "nearest" });
+  const tile = all[draftsFocus];
+  // on a section's first row, bring its heading along, so arrowing back up to the top shows "Recents" and not just the tile
+  const section = tile.closest(".section");
+  const first = section?.querySelector<HTMLElement>(".tile");
+  if (section && first && Math.abs(tile.offsetTop - first.offsetTop) < 1) {
+    section.querySelector(".section-title")?.scrollIntoView({ block: "nearest" });
+  }
+  tile.scrollIntoView({ block: "nearest" });
 }
 
 /**

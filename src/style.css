@@ -865,6 +865,15 @@ body {
   opacity: 0.4;
 }
 
+/* keyboard selection scrolls these into view: keep the page's own inset above a heading, and room for the ring round a tile */
+.section-title {
+  scroll-margin-top: 24px;
+}
+
+.tile {
+  scroll-margin: 8px 0;
+}
+
 .section-title[contenteditable]:hover,
 .section-title[contenteditable]:focus {
   cursor: text;
