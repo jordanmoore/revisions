@@ -937,7 +937,7 @@ body {
 
 .log-title {
   color: var(--toner);
-  font-weight: 600;
+  font-weight: 500; /* the same weight as a tile's title on the dashboard */
 }
 
 .log-row {
