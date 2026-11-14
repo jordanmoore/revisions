@@ -5,6 +5,8 @@ import {
   createElement,
   ArrowDown,
   ArrowUp,
+  CaseSensitive,
+  CaseUpper,
   Circle,
   CircleDashed,
   Eye,
@@ -155,6 +157,7 @@ function mountEditor(d: Doc) {
   themeEl.addEventListener("pointerdown", (e) => e.preventDefault()); // keep the caret where it is
   themeEl.addEventListener("click", () => toggleTheme());
   applyTheme();
+  applyCase();
 
   // clicking empty stage puts you back on the live line
   stageEl.addEventListener("mousedown", (e) => {
@@ -566,6 +569,31 @@ function strokePath(x0: number, x1: number, y: number, seed: string): string {
   return d;
 }
 
+/**
+ * Where the middle of a capital and the baseline sit within a line's inline box, as
+ * fractions of its height. Futura Now carries tall ascender metrics, so its caps sit
+ * lower in the box than Archivo's; measured once per font so the strike goes through
+ * the letters and the underline hangs just under them.
+ */
+type FontLines = { mid: number; base: number };
+const fontLinesCache = new Map<string, FontLines>();
+function fontLines(el: HTMLElement): FontLines {
+  const font = getComputedStyle(el).font;
+  let f = fontLinesCache.get(font);
+  if (!f) {
+    f = { mid: 0.53, base: 0.8 };
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (ctx) {
+      ctx.font = font;
+      const m = ctx.measureText("H");
+      const box = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
+      if (box > 0) f = { mid: (m.fontBoundingBoxAscent - m.actualBoundingBoxAscent / 2) / box, base: m.fontBoundingBoxAscent / box };
+    }
+    fontLinesCache.set(font, f);
+  }
+  return f;
+}
+
 function drawMarks(rev: Rev) {
   const els = rows.get(rev.id)!;
   if (els.row.classList.contains("is-hidden")) return;
@@ -588,12 +616,13 @@ function drawMarks(rev: Rev) {
   }
   if (wantStrike && (!els.struck || geometryChanged)) {
     const animate = !els.struck;
+    const { mid } = fontLines(els.sentence);
     strikeGroup.innerHTML = "";
     lines.forEach((l, i) => {
-      const y = l.top + l.height * 0.53;
+      const y = l.top + l.height * mid;
       const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
       p.setAttribute("class", "strike");
-      p.setAttribute("d", strokePath(2, l.width + 14, y, rev.id + "s" + i));
+      p.setAttribute("d", strokePath(l.left + 2, l.left + l.width + 14, y, rev.id + "s" + i));
       strikeGroup!.appendChild(p);
       const len = p.getTotalLength();
       p.style.strokeDasharray = `${len}`;
@@ -628,7 +657,7 @@ function drawMarks(rev: Rev) {
       ul.setAttribute("class", "underline");
       els.marks.appendChild(ul);
     }
-    ul.setAttribute("d", strokePath(2, last.width + 12, last.top + last.height + 6, rev.id + "u"));
+    ul.setAttribute("d", strokePath(last.left + 2, last.left + last.width + 12, last.top + last.height * fontLines(els.sentence).base + 10, rev.id + "u"));
     const len = ul.getTotalLength();
     ul.style.strokeDasharray = `${len}`;
     ul.style.transitionDelay = "0ms";
@@ -853,6 +882,24 @@ function toggleGlobalTheme() {
   localStorage.setItem(THEME_KEY, globalDark ? "dark" : "light");
   if (view === "log") mountLog();
   else mountDrafts();
+}
+
+// ---------- case ----------
+// Ad copy is capitals by default: the display face is set in uppercase, and the words
+// underneath keep whatever case they were typed in. ⌘⇧U shows a draft as typed.
+
+function applyCase() {
+  app.dataset.case = doc.asTyped ? "typed" : "caps";
+}
+
+function toggleCase() {
+  if (doc.asTyped) delete doc.asTyped;
+  else doc.asTyped = true;
+  markDirty();
+  applyCase();
+  // the lines rewrap, so the strikes and underlines are redrawn to the new geometry
+  for (const els of rows.values()) els.sig = "";
+  layout();
 }
 
 function goLatest() {
@@ -1240,6 +1287,11 @@ function editorKeydown(e: KeyboardEvent) {
     toggleTape();
     return;
   }
+  if (meta && e.shiftKey && (e.key === "u" || e.key === "U")) {
+    e.preventDefault();
+    toggleCase();
+    return;
+  }
   if (kind === "tape" && !meta && !e.altKey) {
     tapeKeydown(e);
     return;
@@ -1436,6 +1488,7 @@ function editorCommands(): Command[] {
     { id: "first", icon: ArrowUp, label: "Go to first revision", key: "⌘↑", run: () => browseTo(visibleRevs()[0].id) },
     { id: "last", icon: ArrowDown, label: "Go to latest revision", key: "⌘↓", run: () => goLatest() },
     { id: "theme", icon: dark ? Sun : Moon, label: dark ? "Light theme" : "Dark theme", key: "⌘⇧D", keywords: "theme invert", run: () => toggleTheme() },
+    { id: "case", icon: doc.asTyped ? CaseUpper : CaseSensitive, label: doc.asTyped ? "Uppercase" : "Original case", key: "⌘⇧U", keywords: "case capitals caps lowercase typed", run: () => toggleCase() },
     { id: "rename", icon: TextCursorInput, label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
     { id: "newdraft", icon: Plus, label: "New draft", keywords: "create file", run: () => createDraft() },
     { id: "home", icon: LayoutGrid, label: "Go to dashboard", key: "Esc", keywords: "drafts home back", run: () => { save(); location.hash = "#/"; } },
@@ -1531,7 +1584,7 @@ function tileHtml(d: Doc): string {
   if (banked) parts.push(`${banked} banked`);
   parts.push(ago(d.updatedAt));
   return `
-    <a class="tile ${effectiveDark(d) ? "is-dark" : "is-light"}" href="#/d/${d.id}" data-id="${d.id}">
+    <a class="tile ${effectiveDark(d) ? "is-dark" : "is-light"}${d.asTyped ? " as-typed" : ""}" href="#/d/${d.id}" data-id="${d.id}">
       <div class="mini">
         <div class="mini-stream">${prevLine(older, "is-older")}${prevLine(prev, "")}${latestHtml}</div>
       </div>
@@ -1565,6 +1618,7 @@ function mountDrafts(focusGroupId?: string) {
   view = "drafts";
   setPageTitle();
   app.dataset.theme = globalDark ? "dark" : "light";
+  delete app.dataset.case; // each tile carries its own draft's case
   const docs = [...loadStore().docs].sort((a, b) => b.updatedAt - a.updatedAt);
   const gs = groups();
   const recents = docs.filter((d) => !getGroup(d.groupId));
@@ -1796,6 +1850,7 @@ function mountLog() {
   view = "log";
   setPageTitle("Every revision");
   app.dataset.theme = globalDark ? "dark" : "light";
+  delete app.dataset.case;
   const docs = [...loadStore().docs].filter((d) => d.revs.some((r) => r.text.trim())).sort((a, b) => b.updatedAt - a.updatedAt);
   const rows = docs
     .map((d) => {
@@ -1808,7 +1863,7 @@ function mountLog() {
       const parts = [`${count} ${count === 1 ? "revision" : "revisions"}`];
       if (banked) parts.push(`${banked} banked`);
       parts.push(ago(d.updatedAt));
-      return `<section class="log-entry">
+      return `<section class="log-entry${d.asTyped ? " as-typed" : ""}">
         <a class="log-meta" href="#/d/${d.id}"><span class="log-title">${escapeHtml(d.title || "Untitled")}</span><span class="log-sub">${parts.join(" · ")}</span></a>
         <p class="log-row">${revs}</p>
       </section>`;

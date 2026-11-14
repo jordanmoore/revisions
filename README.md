@@ -2,7 +2,7 @@
 
 One sentence at a time. Type, hit Return, type it better. The live line stays centred; everything you've moved past scrolls up, fades, and gets crossed out. Bank the ones that are working, leave a note in the margin, scroll back and restore any of them.
 
-Design source: the Paper file **Revisions**. The build has since moved on from the mocks: pure white ground, mixed-case sentences, red-pen strikes and underlines, black Permanent Marker notes, a yellow highlighter for the word hop, and the sentence column centred.
+Design source: the Paper file **Revisions**, and the Figma frame "Untitled" for the ad-copy pass. The build has since moved on from the Paper mocks: pure white ground, red-pen strikes and underlines, black Permanent Marker notes, a yellow highlighter for the word hop, and the sentence column centred. Sentences are set in capitals, centred, in Futura Condensed Bold, so what you type reads like a line of copy; typing starts from the middle of the page and grows outwards.
 
 ## Run
 
@@ -29,6 +29,7 @@ The app opens on **Drafts**, a dashboard of every draft as a shrunken editor til
 | `⌘B` | Bank / unbank the live line | Bank / unbank (bare `B` also works) |
 | `⌘⇧B` | View banked | View banked |
 | `⌘⇧D` | Dark or light for this draft, overriding the app setting; its tile on the Drafts page follows | |
+| `⌘⇧U` | Original case: show this draft as typed instead of in capitals (and back); its tile and its lines in Every revision follow | Same |
 | `↑` `↓` | Browse history (from the first / last visual line of the sentence) | Move between revisions |
 | `⌘↑` `⌘↓` | Jump to the very first revision / back to the latest | Same |
 | `Esc` | Leave the note | Back to the latest line; in banked-only, back to all revisions |
@@ -44,7 +45,9 @@ Drafts can be gathered into **groups**. The dashboard shows Recents (drafts in n
 
 **Every revision** (`#/log`, or the revision count on the Drafts page, or "Every revision" in the command bar) lays out every sentence from every draft as one flowing record: the draft's name, then each revision in order, faded except the banked ones. Click a sentence to open that draft browsing at that revision.
 
-`⌘K` opens a command bar in either view, in the same style as the Possible Forms palette: type to filter, arrows to choose, Return to run. In the editor it lists every action (new or blank revision, bank, note, view banked, first or latest, dark mode for the draft, rename, new draft, back to drafts, open another draft, delete). On the Drafts page it offers new draft, open or delete the selected draft, open any draft by name or its opening words, and dark mode for the app. Any draft row goes deeper: Tab (or →) opens that draft's own actions, so you can open, rename, move between groups or delete a draft you found by searching, without opening it first. Rename turns the bar into a text field (Return saves); Backspace on an empty bar, or Esc, steps back out.
+**Capitals** are the default: every sentence is displayed in uppercase, in the editor, on the Drafts tiles, in the rail and in Every revision, whatever case it was typed in. The words underneath keep their case, so `⌘⇧U` (or "Original case" in the command bar) shows a draft as written, and `⌘⇧U` again puts the capitals back. It is remembered per draft.
+
+`⌘K` opens a command bar in either view, in the same style as the Possible Forms palette: type to filter, arrows to choose, Return to run. In the editor it lists every action (new or blank revision, bank, note, view banked, first or latest, dark mode for the draft, as typed or capitals, rename, new draft, back to drafts, open another draft, delete). On the Drafts page it offers new draft, open or delete the selected draft, open any draft by name or its opening words, and dark mode for the app. Any draft row goes deeper: Tab (or →) opens that draft's own actions, so you can open, rename, move between groups or delete a draft you found by searching, without opening it first. Rename turns the bar into a text field (Return saves); Backspace on an empty bar, or Esc, steps back out.
 
 The Drafts page has a moon / sun control for the whole app (it starts from your system preference and is remembered in the browser). A draft can override it from its own top bar; setting a draft back to match the app clears the override.
 
@@ -56,7 +59,7 @@ The squiggle beside "Drafts" and in the favicon is Frame 33 from the Figma draft
 
 ## Fonts
 
-Sentences use Helvetica Neue Condensed Bold when it is installed locally (it is on macOS), otherwise Archivo from Google Fonts pulled in to 75% width. Notes and revision numbers are Permanent Marker; chrome is Inter.
+Sentences are Futura Condensed Bold and the timeline rail and the faint revision numbers Futura Condensed Medium: URW++'s Futura, licensed as a webfont from Font Bros and served from `src/fonts/` through `@font-face` (the licence covers any site Jordan owns, up to a monthly page-view cap, and allows only `@font-face` use). The `.woff` files are not committed; drop them into `src/fonts/` from the Font Bros order before building. Archivo from Google Fonts, pulled in to 75% width at the same weights, stands in while they load or if they are missing. Notes and the tape are Permanent Marker; chrome is Inter.
 
 ## Deploy
 

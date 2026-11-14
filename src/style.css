@@ -18,10 +18,10 @@
   --note-col: max(180px, min(320px, calc(50vw - var(--col) / 2 - var(--gutter) - 32px)));
   --gap: 64px;
 
-  --size: 64px;
-  --line: 62px;
+  --size: 66px;
+  --line: 74px;
 
-  --font-display: "Helvetica Neue Condensed", "Helvetica Neue", "Archivo", system-ui, sans-serif;
+  --font-display: "Futura Condensed", "Archivo", system-ui, sans-serif;
   --font-ui: "Inter", system-ui, sans-serif;
   --font-script: "Permanent Marker", cursive;
 
@@ -63,12 +63,43 @@
   filter: invert(1);
 }
 
-/* Jordan's Mac has Helvetica Neue Condensed Bold installed; everyone else gets Archivo pulled in to 75%. */
+/*
+ * Futura Condensed by URW++, licensed as a webfont from Font Bros (Font Brothers) for
+ * this site: Bold for the sentences, Medium for the timeline. Copyright URW++,
+ * all rights reserved; served only through @font-face as the licence requires.
+ * Archivo pulled in to 75% stands in while they load, and for anyone they fail for.
+ */
 @font-face {
-  font-family: "Helvetica Neue Condensed";
-  src: local("HelveticaNeue-CondensedBold"), local("Helvetica Neue Condensed Bold");
+  font-family: "Futura Condensed";
+  src: url("./fonts/futura-condensed-bold.woff") format("woff");
   font-weight: 700;
   font-stretch: 75%;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Futura Condensed";
+  src: url("./fonts/futura-condensed-medium.woff") format("woff");
+  font-weight: 500;
+  font-stretch: 75%;
+  font-display: swap;
+}
+
+/* ad copy: everything set in the display face is capitals unless the draft asks for its case as typed (⌘⇧U) */
+.sentence,
+.tick .num,
+.mini-prev,
+.mini-live,
+.log-row {
+  text-transform: uppercase;
+}
+
+#app[data-case="typed"] .sentence,
+#app[data-case="typed"] .tick .num,
+.tile.as-typed .mini-prev,
+.tile.as-typed .mini-live,
+.log-entry.as-typed .log-row {
+  text-transform: none;
 }
 
 * {
@@ -345,9 +376,11 @@ body {
 }
 
 .tick .num {
-  font-size: 12px;
-  line-height: 16px;
+  font-family: var(--font-display);
   font-weight: 500;
+  font-stretch: 75%;
+  font-size: 16px;
+  line-height: 20px;
   color: var(--toner);
   opacity: 0.2;
   transition: opacity 0.3s, color 0.3s;
@@ -445,7 +478,8 @@ body {
   font-stretch: 75%;
   font-size: var(--size);
   line-height: var(--line);
-  letter-spacing: -0.005em;
+  letter-spacing: -0.016em;
+  text-align: center;
   color: var(--toner);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -498,10 +532,11 @@ body {
   left: 0;
   top: 22px;
   transform: translateX(calc(-100% - 28px));
-  font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 18px;
+  font-family: var(--font-display);
   font-weight: 500;
+  font-stretch: 75%;
+  font-size: 16px;
+  line-height: 20px;
   color: var(--faded-2);
   pointer-events: none;
   white-space: nowrap;
@@ -681,8 +716,8 @@ body {
   :root {
     --col: min(800px, calc(100vw - 2 * 180px));
     --note-col: var(--col);
-    --size: 52px;
-    --line: 50px;
+    --size: 55px;
+    --line: 62px;
   }
 
   .stream {
@@ -718,8 +753,8 @@ body {
   :root {
     --rail-left: 20px;
     --col: calc(100vw - 2 * 80px);
-    --size: 40px;
-    --line: 38px;
+    --size: 43px;
+    --line: 48px;
     --gap: 40px;
   }
 
@@ -906,8 +941,8 @@ body {
   font-weight: 700;
   font-stretch: 75%;
   font-size: 28px;
-  line-height: 26px;
-  letter-spacing: -0.005em;
+  line-height: 32px;
+  letter-spacing: -0.016em;
   color: var(--toner);
 }
 
@@ -940,7 +975,7 @@ body {
 
   .log-row {
     font-size: 20px;
-    line-height: 20px;
+    line-height: 24px;
     column-gap: 14px;
   }
 }
@@ -1016,6 +1051,7 @@ body {
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  text-align: center;
 }
 
 .mini-prev,
@@ -1024,8 +1060,8 @@ body {
   font-weight: 700;
   font-stretch: 75%;
   font-size: 22px;
-  line-height: 22px;
-  letter-spacing: -0.005em;
+  line-height: 26px;
+  letter-spacing: -0.016em;
   color: var(--toner);
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -1139,8 +1175,8 @@ body {
 }
 
 .drafts-empty .mini-live {
-  font-size: 64px;
-  line-height: 62px;
+  font-size: 66px;
+  line-height: 74px;
 }
 
 .drafts-empty p {
