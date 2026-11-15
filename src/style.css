@@ -1458,3 +1458,98 @@ body {
   pointer-events: none;
   flex: 0 0 auto;
 }
+
+/* ---- the cigarette: an Easter egg, first person, from src/cigarette.ts ---- */
+
+/* the smoke lies over the page and under the hand, and never takes a click */
+.smoke {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* the hand: a sprite on the bottom edge, a little right of centre (cigarette.ts sets its left and size),
+   parked below the page, slides up when lit, lifts to the mouth on a drag, falls away when out */
+.cig {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 6;
+  pointer-events: none;
+  transform: translate(4%, 110%);
+  transition: transform 0.8s var(--ease);
+  transform-origin: 55% 100%;
+}
+
+.cig.is-lit {
+  transform: translate(0, 0);
+}
+
+.cig.is-dragging {
+  transform: translate(-8%, 8%) scale(1.5) rotate(-5deg);
+  transition-duration: 0.9s;
+}
+
+.cig.is-out {
+  transform: translate(3%, 118%) rotate(4deg);
+  transition-duration: 1.2s;
+  transition-timing-function: ease-in;
+}
+
+.cig-hand {
+  position: relative;
+  pointer-events: auto;
+  cursor: pointer;
+  animation: cig-idle 4.5s ease-in-out infinite;
+}
+
+/* 1996 pixels: no smoothing, whatever the browser scales it to */
+.cig-sprite {
+  display: block;
+  image-rendering: pixelated;
+}
+
+#app[data-theme="dark"] .cig-sprite {
+  filter: brightness(0.82);
+}
+
+@keyframes cig-idle {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(-0.4deg); }
+}
+
+/* the ember's glow, over the lit end: a dull red once it has caught, bright when pulled on */
+.cig-glow {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--ink);
+  opacity: 0;
+  filter: blur(7px);
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.cig.is-burning .cig-glow {
+  opacity: 0.28;
+}
+
+.cig.is-pulling .cig-glow {
+  background: #ff7a3d;
+  animation: cig-pull 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes cig-pull {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cig {
+    transition: none;
+  }
+
+  .cig-hand {
+    animation: none;
+  }
+}

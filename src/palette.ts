@@ -20,6 +20,8 @@ export type Command = {
   note?: string;
   /** Extra words that should match in search but are not shown. */
   keywords?: string;
+  /** Only listed once typed for: an Easter egg, not a menu item. */
+  hidden?: boolean;
   danger?: boolean;
   /** Runs on Return. Rows with a `prompt` instead collect text first. */
   run?: () => void;
@@ -108,7 +110,7 @@ export function openPalette(commands: Command[], opts: Options = {}) {
   const filter = () => {
     const q = input.value.trim().toLowerCase();
     const all = top().commands;
-    shown = q ? all.filter((c) => score(c, q) > 0).sort((a, b) => score(b, q) - score(a, q)) : all;
+    shown = q ? all.filter((c) => score(c, q) > 0).sort((a, b) => score(b, q) - score(a, q)) : all.filter((c) => !c.hidden);
     sel = 0;
     render();
   };

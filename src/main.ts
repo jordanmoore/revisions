@@ -1,6 +1,7 @@
 import "./style.css";
 import { type Doc, type Group, type Rev, addDoc, addGroup, ago, getDoc, getGroup, groups, loadStore, newDoc, newRev, removeDoc, removeGroup, saveStore } from "./store";
 import { type Command, closePalette, isPaletteOpen, openPalette } from "./palette";
+import { drag as takeDrag, isLit, light as lightCigarette, stubOut } from "./cigarette";
 import {
   type IconNode,
   createElement,
@@ -8,6 +9,8 @@ import {
   ArrowUp,
   CaseSensitive,
   CaseUpper,
+  Cigarette,
+  CigaretteOff,
   Circle,
   CircleCheck,
   CircleDashed,
@@ -23,6 +26,7 @@ import {
   SquareDashedX,
   Moon,
   Plus,
+  Sparkles,
   SquareText,
   StickyNote,
   Sun,
@@ -1300,6 +1304,11 @@ function editorKeydown(e: KeyboardEvent) {
     toggleCase();
     return;
   }
+  if (meta && e.shiftKey && (e.key === "s" || e.key === "S") && isLit()) {
+    e.preventDefault();
+    takeDrag();
+    return;
+  }
   if (kind === "tape" && !meta && !e.altKey) {
     tapeKeydown(e);
     return;
@@ -1365,6 +1374,8 @@ function editorKeydown(e: KeyboardEvent) {
         toggleBankedOnly();
       } else if (mode === "browse") {
         goLatest();
+      } else if (isLit()) {
+        stubOut();
       } else {
         // nothing left to escape from: back to the drafts
         save();
@@ -1499,6 +1510,22 @@ function renameDraft(d: Doc, title: string) {
   else if (doc.id === d.id) mountEditor(d);
 }
 
+/**
+ * The cigarette. On the menu it wears the sparkle every other app puts on its AI button and
+ * calls itself "Activate writing prompts"; what you get is a hand and a lighter. It also
+ * answers to "smoke", "cig", "stuck" and the like. Once lit, the drag and the stub-out sit in the list.
+ */
+function cigaretteCommands(): Command[] {
+  if (touch) return [];
+  if (!isLit()) {
+    return [{ id: "light", icon: Sparkles, label: "Activate writing prompts", keywords: "ai ideas inspire stuck block smoke cig cigarette light one", run: () => lightCigarette(stageEl) }];
+  }
+  return [
+    { id: "drag", icon: Cigarette, label: "Take a drag", key: "⌘⇧S", keywords: "smoke puff cigarette inhale", run: () => takeDrag() },
+    { id: "stub", icon: CigaretteOff, label: "Stub it out", key: "Esc", keywords: "smoke cigarette put out extinguish", run: () => stubOut() },
+  ];
+}
+
 function editorCommands(): Command[] {
   const focusRev = revById(focusId);
   const editing = mode === "edit";
@@ -1530,6 +1557,7 @@ function editorCommands(): Command[] {
     { id: "theme", icon: dark ? Sun : Moon, label: dark ? "Light theme" : "Dark theme", key: "⌘⇧D", keywords: "theme invert", run: () => toggleTheme() },
     { id: "case", icon: doc.asTyped ? CaseUpper : CaseSensitive, label: doc.asTyped ? "Uppercase" : "Original case", key: "⌘⇧U", keywords: "case capitals caps lowercase typed", run: () => toggleCase() },
     finalCommand(doc),
+    ...cigaretteCommands(),
     { id: "rename", icon: TextCursorInput, label: "Rename this draft", keywords: "title", run: () => placeCaret(titleEl, "end") },
     { id: "newdraft", icon: Plus, label: "New draft", keywords: "create file", run: () => createDraft() },
     { id: "home", icon: LayoutGrid, label: "Go to dashboard", key: "Esc", keywords: "drafts home back", run: () => { save(); location.hash = "#/"; } },
@@ -2035,6 +2063,7 @@ function logCommands(): Command[] {
 
 function route() {
   closePalette(false);
+  stubOut(true);
   if (view === "editor") save();
   if (/^#\/log\b/.test(location.hash)) {
     mountLog();
